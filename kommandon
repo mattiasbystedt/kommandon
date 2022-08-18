@@ -664,7 +664,9 @@ alias unsuspend='gam unsuspend user'
 ### EXTENS
 alias pnr='~/gam/./sql.sh pnr'
 alias anv='~/gam/./sql.sh anv'
-alias spec='~/gam/./sql.sh spec'
+alias utbgr='~/gam/./sql.sh utbgr'
+alias persgr='~/gam/./sql.sh persgr'
+alias anst='~/gam/./sql.sh anst'
 
 # only used to set or update your AD password
 alias AD_password='nano ~/password.txt && cat ~/password.txt | tr -d "\n" > ~/gam/.pass.txt && rm ~/password.txt && chmod 600 ~/gam/.pass.txt'

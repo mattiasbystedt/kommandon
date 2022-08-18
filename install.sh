@@ -6,7 +6,7 @@ echo $checkos
 # install or update new commands
 add_kommandon()
 {
-  curl https://raw.githubusercontent.com/lerklompen/kommandon/master/kommandon > ~/.kommandon
+  curl https://raw.githubusercontent.com/mattiasbystedt/kommandon/master/kommandon > ~/.kommandon
   source ~/gam/.ad_user
   source ~/gam/.ad_conf
   if [ "$checkos" == "Darwin" ]; then

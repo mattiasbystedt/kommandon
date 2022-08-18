@@ -1,8 +1,6 @@
 # aliases and commfunctions added here, this file is then "sourced" in .bashrc
 # depencies:
 # GAMADV-xtd3
-# (pip3 install --user --upgrade pip) - stay updated!
-# pip3 install --user csvkit
 # for MAC also install Homebrew and then coreutils and gnumeric (convert to xlsx)
 
 # csvkit (and other "pip" installations)
@@ -646,12 +644,12 @@ ADgroup() {
 # aliases
 alias profile='nano ~/.kommandon && source ~/.kommandon'
 alias gam='~/bin/gamadv-xtd3/gam'
-alias kommandupdate='curl https://raw.githubusercontent.com/lerklompen/kommandon/master/kommandon > ~/.kommandon && ldapinsert && sourcekommandon'
-alias kommandoupdate='curl https://raw.githubusercontent.com/lerklompen/kommandon/master/kommandon > ~/.kommandon && ldapinsert && sourcekommandon'
-alias commandupdate='curl https://raw.githubusercontent.com/lerklompen/kommandon/master/kommandon > ~/.kommandon && ldapinsert && sourcekommandon'
-alias updatekommand='curl https://raw.githubusercontent.com/lerklompen/kommandon/master/kommandon > ~/.kommandon && ldapinsert && sourcekommandon'
-alias updatekommando='curl https://raw.githubusercontent.com/lerklompen/kommandon/master/kommandon > ~/.kommandon && ldapinsert && sourcekommandon'
-alias updatecommand='curl https://raw.githubusercontent.com/lerklompen/kommandon/master/kommandon > ~/.kommandon && ldapinsert && sourcekommandon'
+alias kommandupdate='curl https://raw.githubusercontent.com/mattiasbystedt/kommandon/master/kommandon > ~/.kommandon && ldapinsert && sourcekommandon'
+alias kommandoupdate='curl https://raw.githubusercontent.com/mattiasbystedt/kommandon/master/kommandon > ~/.kommandon && ldapinsert && sourcekommandon'
+alias commandupdate='curl https://raw.githubusercontent.com/mattiasbystedt/kommandon/master/kommandon > ~/.kommandon && ldapinsert && sourcekommandon'
+alias updatekommand='curl https://raw.githubusercontent.com/mattiasbystedt/kommandon/master/kommandon > ~/.kommandon && ldapinsert && sourcekommandon'
+alias updatekommando='curl https://raw.githubusercontent.com/mattiasbystedt/kommandon/master/kommandon > ~/.kommandon && ldapinsert && sourcekommandon'
+alias updatecommand='curl https://raw.githubusercontent.com/mattiasbystedt/kommandon/master/kommandon > ~/.kommandon && ldapinsert && sourcekommandon'
 alias ldapinsert='source ~/gam/.ad_user && source ~/gam/.ad_conf && gsed -i "s/_userid_/$ad_user/g" ~/.kommandon && gsed -i "s/_ldapurl_/$ad_conf/g" ~/.kommandon'
 alias sourcekommandon='source ~/.kommandon'
 

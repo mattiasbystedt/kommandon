@@ -350,7 +350,7 @@ crosprintdownload() {
 kollagrupper() {
   startdate=$(gdate --date='1 month ago' '+%Y-%m-%d')
   gam report groupsenterprise org /ADMINS/SKOLADMINS events add_user,remove_user start "$startdate" | \
-  csvcut -c 'id.time,actor.email,group_id,name,member_id' | csvsort -r -c 'id.time' | ggrep ".personal@" | \
+  csvcut -c 'id.time,actor.email,group_id,name,member_id' | csvsort -c 'id.time' -r -y 0 | ggrep ".personal@" | \
   gsed 's/T/,/g' | gsed -E 's/\+.*0,/,/g' | \
   ggrep -E -v 'maapps|,vo\.personal|,kvm\.personal|,HEGY_endast_' | \
   gsed '1 i\DATUM,TID,ADMIN,GRUPP,HÄNDELSE,ANVÄNDARE' | column -t -s,

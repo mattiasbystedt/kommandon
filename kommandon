@@ -156,7 +156,7 @@ crosbatch() {
     newChromebooks=$(wc -l ~/gam/00-Chromebook.csv | awk '{ print $1 }')
     otherorgs=$(wc -l ~/gam/cros_in_other_orgs.csv | awk '{ print $1 }')
     if [ $newChromebooks -gt 0 ] ; then
-      echo -e "\n${cyan}Found ${newChromebooks} new devices (in OU 00/01-Chromebook)${reset}"
+      echo -e "\n${cyan}Found ${newChromebooks} new devices (in OU 00-Chromebook)${reset}"
     fi
     if [ $otherorgs -gt 1 ] ; then
       echo -e "\n${cyan}Found devices placed in other OU(s):${reset}"

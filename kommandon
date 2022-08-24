@@ -18,6 +18,11 @@ approve() {
 }
 
 ##### GAM functions
+eol() {
+  csvgrep -c annotatedUser -m $1 crosprint.csv | csvgrep -c orgUnitPath -m RETIRED | csvgrep -c notes -m 2022-08 |\
+  csvcut -c deviceId,orgUnitPath,serialNumber,status,annotatedUser,notes > "${1}-EOL.csv"
+}
+
 # Search staff by userID
 userid() {
   gam info users query employmentData.userID=${1}

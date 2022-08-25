@@ -19,8 +19,15 @@ approve() {
 
 ##### GAM functions
 eol() {
-  csvgrep -c annotatedUser -m $1 crosprint.csv | csvgrep -c orgUnitPath -m RETIRED | csvgrep -c notes -m 2022-08 |\
-  csvcut -c deviceId,orgUnitPath,serialNumber,status,annotatedUser,notes > "${1}-EOL.csv"
+  if [[ $2 == "total" ]] ; then
+    csvgrep -c annotatedUser -m $1 crosprint.csv | csvgrep -c orgUnitPath -m RETIRED |\
+    csvcut -c deviceId,orgUnitPath,serialNumber,status,annotatedUser,notes > "${1}-EOL.csv"
+  else
+    csvgrep -c annotatedUser -m $1 crosprint.csv | csvgrep -c orgUnitPath -m RETIRED | csvgrep -c notes -m 2022-08 |\
+    csvcut -c deviceId,orgUnitPath,serialNumber,status,annotatedUser,notes > "${1}-EOL.csv"
+  fi
+  echo -e "${white}First command:${reset}\n${green}gam csv "${1}-EOL.csv" gam update cros ~~deviceId~~ org "/171/Elev/${1}"${reset}"
+  echo -e "${white}Second command:${reset}\n${green}gam csv "${1}-EOL.csv" gam update cros ~~deviceId~~ action reenable${reset}"
 }
 
 # Search staff by userID

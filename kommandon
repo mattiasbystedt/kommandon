@@ -18,6 +18,19 @@ approve() {
 }
 
 ##### GAM functions
+
+cblogin() {
+  if [ $# -eq 0 ] ; then
+    echo "Usage:"
+    echo "cblogin utbtestes4 (search for user activities)"
+    echo "cblogin cb PF3LJQRH (search for device activities)"
+  elif [[ $1 == "cb" ]] ; then
+    gam report chrome event CHROME_OS_LOGIN_EVENT filter "DEVICE_NAME==${2}" |  csvcut -c DEVICE_NAME,DEVICE_USER,id.time,DIRECTORY_DEVICE_ID | column -t -s,
+  else
+    gam report chrome event CHROME_OS_LOGIN_EVENT filter "DEVICE_USER==${1}@skola.malmo.se" |  csvcut -c DEVICE_NAME,DEVICE_USER,id.time,DIRECTORY_DEVICE_ID | column -t -s,
+  fi
+}
+
 eol() {
   if [[ $2 == "total" ]] ; then
     csvgrep -c annotatedUser -m $1 crosprint.csv | csvgrep -c orgUnitPath -m RETIRED |\

@@ -694,6 +694,7 @@ alias gamupdate='gam version checkrc 2> /dev/null ;
   if [ $? -eq 0 ] ; then echo "GAM is already latest version, not updating!" ;
   else VER=`gam version simple` && mv ~/bin/gamadv-xtd3/gam ~/bin/gam${VER} && bash <(curl -s -S -L https://git.io/fhZWP) -l -d ~/bin ; fi'
 alias unsuspend='gam unsuspend user'
+alias load='source ~/.zshrc'
 
 ### EXTENS
 alias pnr='~/gam/./sql.sh pnr'

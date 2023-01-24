@@ -292,13 +292,13 @@ crosbatch() {
     echo -e "(y/n)?"
     read answer
     if [ "$answer" != "${answer#[Yy]}" ] ; then
-      csvgrep -c status -m "DISABLED" ~/gam/retire.csv > ~/gam/reenable.csv
-      retire_check=$(wc -l ~/gam/reenable.csv | awk '{ print $1 }')
+      csvgrep -c status -m "ACTIVE" ~/gam/retire.csv > ~/gam/disable.csv
+      retire_check=$(wc -l ~/gam/disable.csv | awk '{ print $1 }')
       if [[ $retire_check == "1" ]] ; then
-        echo 'No devices need to be reenabled, continuing...'
+        echo 'No devices need to be disabled, continuing...'
       else
-        echo 'First reenabling devices...'
-        gam csv ~/gam/reenable.csv gam update cros ~~deviceId~~ action reenable
+        eecho 'First disabling devices...'
+        gam csv ~/gam/disable.csv gam update cros ~~deviceId~~ action disable
       fi
       echo 'Now retiring...'
       gam csv ~/gam/retire.csv gam update cros ~~deviceId~~ user ~~orgUnitPath~~ notes "${3}" ou /RETIRED quickcrosmove False nobatchupdate

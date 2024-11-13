@@ -567,7 +567,7 @@ AD() {
       adminDescription streetAddress division roomNumber manager mobile departmentNumber \
        > ~/gam/ldap_out.txt  && while read l ; do a=$(echo $l | awk '{print $1}') && b=$(echo $l | awk '{print $2}') && \
       if [[ $a == *"::" ]] ; then d=$(echo $b | base64 --decode) &&  c=$(echo "${a:0:-1} $d") && echo $c ; else echo $l ; fi ; done \
-      < ~/gam/ldap_out.txt | tee >(grep memberOf | gegrep "17[01]G|SchoolEmployees|EDU_Students" > ~/gam/memberOf.txt) | grep -v memberOf && cat ~/gam/memberOf.txt
+      < ~/gam/ldap_out.txt | tee >(grep memberOf | ggrep "17[01]G|SchoolEmployees|EDU_Students" > ~/gam/memberOf.txt) | grep -v memberOf && cat ~/gam/memberOf.txt
   elif [[ $1 =~ ^(mail|email)$ ]] ; then
     rm ~/gam/memberOf.txt
     printf "(|" > ~/gam/memberOf.txt
@@ -588,7 +588,7 @@ AD() {
       fi
       if [[ $a == "memberOf:" ]] ; then
         g=$(echo $b | awk -F, '{print $1}' | awk -F"=" '{print $2}')
-        printf "(CN=${g})" | gegrep "17[01]G|SchoolEmployees|EDU_Students" >> ~/gam/memberOf.txt
+        printf "(CN=${g})" | ggrep "17[01]G|SchoolEmployees|EDU_Students" >> ~/gam/memberOf.txt
       elif [[ $a == "mail:" ]] ; then
         echo $l
         echo "groups:"
@@ -618,7 +618,7 @@ AD() {
       adminDescription streetAddress division roomNumber manager mobile departmentNumber \
        > ~/gam/ldap_out.txt  && while read l ; do a=$(echo $l | awk '{print $1}') && b=$(echo $l | awk '{print $2}') && \
       if [[ $a == *"::" ]] ; then d=$(echo $b | base64 --decode) &&  c=$(echo "${a:0:-1} $d") && echo $c ; else echo $l ; fi ; done \
-      < ~/gam/ldap_out.txt | tee >(grep memberOf | gegrep "17[01]G|SchoolEmployees|EDU_Students" > ~/gam/memberOf.txt) | grep -v memberOf && cat ~/gam/memberOf.txt
+      < ~/gam/ldap_out.txt | tee >(grep memberOf | ggrep "17[01]G|SchoolEmployees|EDU_Students" > ~/gam/memberOf.txt) | grep -v memberOf && cat ~/gam/memberOf.txt
   elif [[ $1 =~ ^(empgroup)$ ]] ; then
     ldapsearch -LLL -o ldif-wrap=no -H $ad_conf -b \
       "OU=Malmo,DC=intra,DC=malmo,DC=se" -D "CN=${ad_user},OU=Employees,OU=ADM,OU=Malmo,DC=intra,DC=malmo,DC=se" \

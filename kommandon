@@ -192,8 +192,8 @@ crosprint() {
   if [ $# -eq 0 ] ; then
     crosprintcheck
     crosprintfile="crosprint$(gdate '+%Y%m%d').xlsx"
-    gsed 's/\r$//' crosprint.csv | gawk -F, '{print $0 "," substr($2, 0, 6)}' > crosorg.csv
-    ssconvert crosorg.csv $crosprintfile
+    gsed 's/\r$//' ~/gam/crosprint.csv | gawk -F, '{print $0 "," substr($2, 0, 6)}' > ~/gam/crosorg.csv
+    ssconvert ~/gam/crosorg.csv ~/gam/${crosprintfile}
   elif [[ $1 =~ ^(csv)$ ]] ; then
     checkdate=$(gam user admin show fileinfo 1tQj_Zhb2OI0kAnQEk3xxbTOnfxBkusFBFppouqCBh7c fields modifiedTime | ggrep modifiedTime | awk '{print $2}')
     echo "Online file last updated ${checkdate[(ws:T:)1]}"

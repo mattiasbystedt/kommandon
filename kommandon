@@ -517,7 +517,6 @@ undelete() {
 AD() {
   AD_USER_CONF=$(sed -n '5p' ~/gam/.commandconfig.txt)
   echo $AD_USER_CONF | tr -d '\n\r' > ~/gam/.ad_conf.txt
-  # AD name 'firstname' 'lastname'
   if [[ $1 == "name" ]] ; then
     ldapsearch -LLL -o ldif-wrap=no -H $AD_URL -b \
       "OU=Malmo,DC=intra,DC=malmo,DC=se" -D "CN=${AD_USER},OU=Employees,OU=ADM,OU=Malmo,DC=intra,DC=malmo,DC=se" \
@@ -532,8 +531,6 @@ AD() {
 	  else
 		echo $l
 	  fi ; done < ~/gam/ldap_out.txt | tee >(grep memberOf | ggrep -E "17[01]G|SchoolEmployees|EDU_Students" > ~/gam/memberOf.txt) | grep -v memberOf && cat ~/gam/memberOf.txt
-  # AD mail 'part-of-email'
-  # prints out the name of "google groups"
   elif [[ $1 =~ ^(mail|email)$ ]] ; then
     rm ~/gam/memberOf.txt
     printf "(|" > ~/gam/memberOf.txt
@@ -541,7 +538,8 @@ AD() {
         "OU=Malmo,DC=intra,DC=malmo,DC=se" -D "CN=${AD_USER},OU=Employees,OU=ADM,OU=Malmo,DC=intra,DC=malmo,DC=se" \
         -y ~/gam/.ad_conf.txt "(&(mail=${2}*))" \
         cn otherMailbox mail displayName givenName sn department memberOf title physicalDeliveryOfficeName telephoneNumber company \
-        adminDescription streetAddress division roomNumber manager mobile departmentNumber pwdLastSet whenCreated pager extensionName houseIdentifier lastLogonTimestamp > ~/gam/ldap_out.txt
+        adminDescription streetAddress division roomNumber manager mobile departmentNumber \
+        pwdLastSet whenCreated accountExpires pager extensionName houseIdentifier lastLogonTimestamp > ~/gam/ldap_out.txt
     while read l
     do
       a=$(echo $l | awk '{print $1}')
@@ -561,8 +559,6 @@ AD() {
         printf ")" >> ~/gam/memberOf.txt
         groups=$(cat ~/gam/memberOf.txt)
         ADgroup "$groups"
-        # If multiple hits - remove previous users groups from list
-        #rm ~/gam/memberOf.txt
       else
         if [[ $a == "pwdLastSet:" ]] ; then
           d=$(ldaptime $b)
@@ -570,15 +566,14 @@ AD() {
         elif [[ $a == "lastLogonTimestamp:" ]] ; then
           d=$(ldaptime $b)
           echo $a $d
+        elif [[ $a == "accountExpires:" ]] ; then
+          d=$(ldaptime $b)
+          echo $a $d
         else
           echo $l
         fi
       fi
-    done < ~/gam/ldap_out.txt #\
-    #| tee >(grep memberOf | gegrep "17[01]G|SchoolEmployees|EDU_Students" > ~/gam/memberOf.txt) \
-    #| grep -v memberOf
-    #cat ~/gam/memberOf.txt
-  # description here...
+    done < ~/gam/ldap_out.txt
   elif [[ $1 =~ ^(mail_and_groups|email_and_groups)$ ]] ; then
     ldapsearch -LLL -o ldif-wrap=no -H $AD_URL -b \
       "OU=Malmo,DC=intra,DC=malmo,DC=se" -D "CN=${AD_USER},OU=Employees,OU=ADM,OU=Malmo,DC=intra,DC=malmo,DC=se" \
@@ -602,7 +597,6 @@ AD() {
       "OU=Malmo,DC=intra,DC=malmo,DC=se" -D "CN=${AD_USER},OU=Employees,OU=ADM,OU=Malmo,DC=intra,DC=malmo,DC=se" \
       -y ~/gam/.ad_conf.txt "(&(mail=${2}))" \
       member > ~/gam/ldap_out.txt
-      #rm ~/gam/groupmembers.txt
     printf "(|" > ~/gam/groupmembers.txt
     while read l
     do 
@@ -621,7 +615,6 @@ AD() {
       "OU=Malmo,DC=intra,DC=malmo,DC=se" -D "CN=${AD_USER},OU=Employees,OU=ADM,OU=Malmo,DC=intra,DC=malmo,DC=se" \
       -y ~/gam/.ad_conf.txt "(&(CN=${2}))" \
       member description > ~/gam/ldap_out.txt
-      #rm ~/gam/groupmembers.txt
     printf "(|" > ~/gam/groupmembers.txt
     while read l
     do 
@@ -640,7 +633,6 @@ AD() {
       "OU=Malmo,DC=intra,DC=malmo,DC=se" -D "CN=${AD_USER},OU=Employees,OU=ADM,OU=Malmo,DC=intra,DC=malmo,DC=se" \
       -y ~/gam/.ad_conf.txt "(&(adminDisplayName=adm-schoolemployees-school-${2}-*)(CN=ADM_SchoolEmployees-17*-School-*))" \
       member description adminDisplayName > ~/gam/ldap_out.txt
-      #rm ~/gam/groupmembers.txt
     printf "(|" > ~/gam/groupmembers.txt
     while read l
     do 
@@ -745,7 +737,6 @@ ADgroup() {
     if [[ $a == *"::" ]] ; then
       a=$(echo $l | awk '{print $1}')
       b=$(echo $b | base64 --decode)
-      #b=$(echo "${a:0:-1} $c")
     fi
     if [[ $a =~ "displayName" ]] ; then
       echo $b
@@ -758,4 +749,5 @@ ldaptime() {
   # compensate for AD being off +1h ?? - how?
   u=$(echo "$(($1 / 10000000))") && t=$(echo "$(($u - 11644473600))") && gdate -d @$t +'%Y-%m-%d %H:%M:%S'
 }
+
 

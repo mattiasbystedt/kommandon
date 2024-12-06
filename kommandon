@@ -46,24 +46,12 @@ help() {
   list_kommandon
 }
 
-kommandon() {
-  list_kommandon
-}
-
-list() {
-  list_kommandon
-}
-
-lista() {
-  list_kommandon
-}
-
 list_kommandon() {
   echo "${cyan}Examples:${reset}"
-  echo "${green}help|kommandon|list|lista${reset} //Show this list"
+  echo "${green}help${reset} //Show this list"
   echo "${green}reload${reset} //Reload after update"
-  echo "${green}kommandoupdate|updatekommandon|commandupdate|updatecommand${reset} //Update kommandon"
-  echo "${green}egilupdate|updateegil${reset} //Update EGIL-commands"
+  echo "${green}kommandoupdate${reset} //Update kommandon"
+  echo "${green}egilupdate${reset} //Update EGIL-commands"
 }
 
 reload() {
@@ -74,24 +62,8 @@ kommandoupdate() {
   curl https://raw.githubusercontent.com/mattiasbystedt/kommandon/master/kommandon > ~/.kommandon
 }
 
-updatekommandon() {
-  kommandoupdate
-}
-
-commandupdate() {
-  kommandoupdate
-}
-
-updatecommand() {
-  kommandoupdate
-}
-
 egilupdate() {
   curl https://raw.githubusercontent.com/mattiasbystedt/egil-kommandon/master/egil.sh > ~/gam/egil.sh
-}
-
-updateegil() {
-  egilupdate
 }
 
 ## GAM COMMANDS ##

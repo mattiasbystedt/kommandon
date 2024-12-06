@@ -175,15 +175,11 @@ classroom() {
   fi
 }
 
-# TODO - "hide" drivefile for report files!
-
 # download latest user report including a copy in Excel format
 userprint() {
   now=$(gdate '+%Y%m%d')
-  gam user admin get drivefile 1QoShvXWsESg026jPUR5QNq9AcESjXvt5ZX_Qe9VzyqI gsheet "userprint03.csv" targetfolder ~/gam targetname "userprint${now}.csv"
-  # below row ADDS "orgUni" as last column
+  gam user admin get drivefile ${USERFILE} gsheet "userprint03.csv" targetfolder ~/gam targetname "userprint${now}.csv"
   csvformat -D "|" userprint${now}.csv | gsed 's/\r$//' | gawk -F"|" '{print $0 "|" substr($5, 0, 6)}' | csvformat -d "|" -D "," > userprint_org.csv
-  #gsed 's/\r$//' userprint${now}.csv | gawk -F, '{print $0 "," substr($5, 0, 6)}' > userprint_org.csv
   ssconvert ~/gam/userprint_org.csv ~/gam/userprint${now}.xlsx
 }
 
@@ -192,12 +188,12 @@ crosprint() {
   if [ $# -eq 0 ] ; then
     crosprintcheck
     crosprintfile="crosprint$(gdate '+%Y%m%d').xlsx"
-    gsed 's/\r$//' ~/gam/crosprint.csv | gawk -F, '{print $0 "," substr($2, 0, 6)}' > ~/gam/crosorg.csv
-    ssconvert ~/gam/crosorg.csv ~/gam/${crosprintfile}
+    gsed 's/\r$//' crosprint.csv | gawk -F, '{print $0 "," substr($2, 0, 6)}' > crosorg.csv
+    ssconvert crosorg.csv $crosprintfile
   elif [[ $1 =~ ^(csv)$ ]] ; then
-    checkdate=$(gam user admin show fileinfo 1tQj_Zhb2OI0kAnQEk3xxbTOnfxBkusFBFppouqCBh7c fields modifiedTime | ggrep modifiedTime | awk '{print $2}')
+    checkdate=$(gam user admin show fileinfo ${CROSFILE} fields modifiedTime | ggrep modifiedTime | awk '{print $2}')
     echo "Online file last updated ${checkdate[(ws:T:)1]}"
-    gam user admin get drivefile 1tQj_Zhb2OI0kAnQEk3xxbTOnfxBkusFBFppouqCBh7c csvsheet crosprint.csv targetfolder ~/gam targetname crosprint.csv overwrite true \
+    gam user admin get drivefile ${CROSFILE} csvsheet crosprint.csv targetfolder ~/gam targetname crosprint.csv overwrite true \
          && csvcut -c status,deviceId,serialNumber,lastSync,model,osVersion,orgUnitPath ~/gam/crosprint.csv > ~/gam/cros.csv
   fi
 }
@@ -218,9 +214,9 @@ crosprintcheck() {
 }
 
 crosprintdownload() {
-  checkdate=$(gam user admin show fileinfo 1tQj_Zhb2OI0kAnQEk3xxbTOnfxBkusFBFppouqCBh7c fields modifiedTime | ggrep modifiedTime | awk '{print $2}')
+  checkdate=$(gam user admin show fileinfo ${CROSFILE} fields modifiedTime | ggrep modifiedTime | awk '{print $2}')
   echo "Online file last updated ${checkdate[(ws:T:)1]}"
-  gam user admin get drivefile 1tQj_Zhb2OI0kAnQEk3xxbTOnfxBkusFBFppouqCBh7c csvsheet crosprint.csv targetfolder ~/gam targetname crosprint.csv overwrite true \
+  gam user admin get drivefile ${CROSFILE} csvsheet crosprint.csv targetfolder ~/gam targetname crosprint.csv overwrite true \
       && csvcut -c status,deviceId,serialNumber,lastSync,model,osVersion,orgUnitPath ~/gam/crosprint.csv > ~/gam/cros.csv
 }
 

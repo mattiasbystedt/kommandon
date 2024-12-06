@@ -32,7 +32,7 @@ alias pnr='~/gam/./sql.sh pnr'
 alias utbgr='~/gam/./sql.sh utbgr'
 
 ## EGIL ##
-alias egil='~/gam/./.egil.sh'
+alias egil='~/gam/./egil.sh'
 
 ## GAM ##
 alias user='gam info user'

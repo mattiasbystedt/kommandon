@@ -41,6 +41,59 @@ alias unsuspend='gam unsuspend user'
 alias gamversion='gam version checkrc 2> /dev/null ; if [ $? -eq 0 ] ; then echo "OK" ; else echo "update needed" && ; fi'
 alias allgroups='groupfile="allgroups$(gdate '"'"'+%Y%m%d'"'"').csv" && gam print groups fields "email,id,name,description,directMembersCount,adminCreated,aliases" > $groupfile && csvgrep -c adminCreated -m True $groupfile > admin${groupfile}'
 
+## KOMMANDON ##
+help() {
+  list_kommandon
+}
+
+kommandon() {
+  list_kommandon
+}
+
+list() {
+  list_kommandon
+}
+
+lista() {
+  list_kommandon
+}
+
+list_kommandon() {
+  echo "${cyan}Examples:${reset}"
+  echo "${green}help|kommandon|list|lista${reset} //Show this list"
+  echo "${green}reload${reset} //Reload after update"
+  echo "${green}kommandoupdate|updatekommandon|commandupdate|updatecommand${reset} //Update kommandon"
+  echo "${green}egilupdate|updateegil${reset} //Update EGIL-commands"
+}
+
+reload() {
+  source ~/.zshrc
+}
+
+kommandoupdate() {
+  curl https://raw.githubusercontent.com/mattiasbystedt/kommandon/master/kommandon > ~/.kommandon
+}
+
+updatekommandon() {
+  kommandoupdate
+}
+
+commandupdate() {
+  kommandoupdate
+}
+
+updatecommand() {
+  kommandoupdate
+}
+
+egilupdate() {
+  curl https://raw.githubusercontent.com/mattiasbystedt/egil-kommandon/master/egil.sh > ~/gam/egil.sh
+}
+
+updateegil() {
+  egilupdate
+}
+
 ## GAM COMMANDS ##
 
 # Search for user/device activities on Chromebooks

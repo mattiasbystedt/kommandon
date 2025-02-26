@@ -613,6 +613,15 @@ AD() {
        > ~/gam/ldap_out.txt  && while read l ; do a=$(echo $l | awk '{print $1}') && b=$(echo $l | awk '{print $2}') && \
       if [[ $a == *"::" ]] ; then d=$(echo $b | base64 --decode) &&  c=$(echo "${a:0:-1} $d") && echo $c ; else echo $l ; fi ; done \
       < ~/gam/ldap_out.txt | tee >(grep memberOf > ~/gam/memberOf.txt) | grep -v memberOf && cat ~/gam/memberOf.txt
+  elif [[ $1 =~ ^(eppn|EPPN)$ ]] ; then
+    ldapsearch -LLL -o ldif-wrap=no -H $AD_URL -b \
+      "OU=Malmo,DC=intra,DC=malmo,DC=se" -D "CN=${AD_USER},OU=Employees,OU=ADM,OU=Malmo,DC=intra,DC=malmo,DC=se" \
+      -y ~/gam/.ad_conf.txt "(&(extensionName=${2}))" \
+      cn otherMailbox mail displayName department title physicalDeliveryOfficeName telephoneNumber company \
+      adminDescription streetAddress division roomNumber manager mobile departmentNumber \
+       > ~/gam/ldap_out.txt  && while read l ; do a=$(echo $l | awk '{print $1}') && b=$(echo $l | awk '{print $2}') && \
+      if [[ $a == *"::" ]] ; then d=$(echo $b | base64 --decode) &&  c=$(echo "${a:0:-1} $d") && echo $c ; else echo $l ; fi ; done \
+      < ~/gam/ldap_out.txt | tee >(grep memberOf > ~/gam/memberOf.txt) | grep -v memberOf && cat ~/gam/memberOf.txt
   elif [[ $1 =~ ^(group)$ ]] ; then
     ldapsearch -LLL -o ldif-wrap=no -H $AD_URL -b \
       "OU=Malmo,DC=intra,DC=malmo,DC=se" -D "CN=${AD_USER},OU=Employees,OU=ADM,OU=Malmo,DC=intra,DC=malmo,DC=se" \

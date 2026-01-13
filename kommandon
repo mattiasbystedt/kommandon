@@ -280,4 +280,373 @@ user() {
 ## -- CLASSROOM -- 
 ## *******************************************************************************************
 
+# list and manage classrooms
+classroom() {
+  if [[ ($# -eq 1) ]] ; then
+    WORK_DIR=`gmktemp -d "$HOME/gam/tmpXXXXX"`
+    # check if tmp dir was created
+    if [[ ! "$WORK_DIR" || ! -d "$WORK_DIR" ]]; then
+      echo "Could not create temp dir"
+      return
+    fi
+    gam redirect csv "$WORK_DIR"/tmp1 columndelimiter "|" print courses teacher $1 fields "id,name,coursestate,descriptionheading,section,alternateLink,ownerid"
+    cat "$WORK_DIR"/tmp1 | tail -n +2 | awk -v id="id:" -F"|" '{print id$NF}' | sort | uniq > "$WORK_DIR"/tmp2
+    gam print users select file "$WORK_DIR"/tmp2 fields "id" | tail -n +2 > "$WORK_DIR"/tmp3
+    in=$(wc -l "$WORK_DIR"/tmp2  | awk '{ print $1 }')
+    out=$(wc -l "$WORK_DIR"/tmp3  | awk '{ print $1 }')
+    if [ ! $in = $out ] ; then
+      echo -e "\n----\nN.B. Some classroom owners are deleted (orphaned/corrupt classrooms found)\n----\n"
+    fi
+    while read r ; do id=$(echo $r | awk -F, '{print $2}') && owner=$(echo $r | awk -F, '{print $1}') && gsed -i "s/${id}/${owner}/g" "$WORK_DIR"/tmp1 ; done < "$WORK_DIR"/tmp3
+    mv "$WORK_DIR"/tmp1 ~/gam/${1}.teacher.csv
+    echo -e ""
+    gsed -i 's/https:\/\/classroom.google.com\/c\///g' ~/gam/${1}.teacher.csv
+    cat ~/gam/${1}.teacher.csv
+    trash "$WORK_DIR"
+  # check if single classroom to transfer
+  elif [[ ($# -eq 2) ]] ; then
+    if [[ $2 =~ ^[0-9]+$ ]] ; then
+      #echo "digits in 2"
+      course=$2
+      new_owner=$1
+    elif [[ $1 =~ ^[0-9]+$ ]] ; then
+      #echo "digits in 1"
+      course=$1
+      new_owner=$2
+    # transfer all classrooms
+    else
+      owner=$(gam info user ${1} fields id | grep 'Google Unique ID' | awk '{print $4}')
+      echo "Getting all courses that ${1} owns..."
+      gam print courses teacher ${1} fields "id,name,courseState,ownerId" | ggrep -P "${owner}|ownerId" | tee /dev/tty > ~/gam/${1}.classroom.csv
+      num=$(wc -l ~/gam/${1}.classroom.csv | awk '{print $1}')
+      num=$(expr $num - 1)
+      echo ""
+      echo "Transfer all ${num} classrooms owned by ${1} to ${2}?"
+      echo -e "(y/n)?"
+      read answer
+      if [ "$answer" != "${answer#[Yy]}" ] ;then
+        echo "OK, now transferring..."
+        gam csv ~/gam/${1}.classroom.csv gam course ~~id~~ add teachers $2
+        gam csv ~/gam/${1}.classroom.csv gam update course ~~id~~ owner $2
+        return
+      else
+        echo "OK, not performing command!"
+        return
+      fi
+    fi
+    # transfer single classroom
+    course_info=$(gam info course $course fields "ownerId,name")
+    course_owner=$(echo "$course_info" | ggrep "ownerEmail: " | awk '{print $2}')
+    course_ownerID=$(echo "$course_info" | ggrep "ownerId: " | awk '{print $2}')
+    course_name=$(echo "$course_info" | ggrep "name: " | awk '{print $2}')
+    echo -e "Transfer classroom \"${course_name}\" owned by ${course_owner} to ${new_owner}?"
+    echo -e "(y/n)?"
+    read answer
+    if [ "$answer" != "${answer#[Yy]}" ] ;then
+      echo "OK, now transferring..."
+      gam course $course add teachers $new_owner
+      gam update course $course owner $new_owner
+      return
+    else
+      echo "OK, not performing command!"
+      return
+    fi    
+  else
+    echo "  List a users Classrooms:\nclassroom user\n  Transfer all Classrooms a user owns to another user:\nclassroom user new_owner\n  Transfer a single Classroom:\nclassroom courseId new_owner"
+  fi
+}
 
+# TODO - cleanup and check if owner/invited is needed
+invites() {
+  for ARG in "$@"
+  do
+    echo $ARG
+    invites=$(gam show classroominvitations course ${ARG})
+    echo $invites
+    ownerLine=$(echo $invites | ggrep -n OWNER | awk -F":" '{print $1}')
+    echo $ownerLine
+    userLine=$(($ownerLine + 2))
+    echo $userLine
+    invitedOwner=$(echo $invites | awk -v line="${userLine}" 'NR==line' | awk '{print $2}')
+    echo $invitedOwner
+    gam user $invitedOwner delete classroominvitation courses $ARG
+  done
+}
+## -- END CLASSROOM --
+
+
+## *******************************************************************************************
+## -- CROS -- 
+## *******************************************************************************************
+
+# show CROS INFO
+cros() {
+if [[ ($# -eq 2) ]] ; then
+  if [[ $2 =~ ^(users|recent)$ ]] ; then
+    gam info cros query id:"$1" fields \
+        "deviceid,org,serialnumber,status,notes,annotatedUser,annotatedLocation,annotatedAssetId,model,osversion,lastsync,lastenrollmenttime,firstenrollmenttime,macaddress,recentusers,autoUpdateExpiration,lastknownnetwork,lastdeprovisiontimestamp,deprovisionreason"
+  elif [[ $2 =~ ^(enable|reenable)$ ]] ; then
+    gam update cros query id:${1} action reenable
+  elif [[ $2 =~ ^(disable)$ ]] ; then
+    gam update cros query id:${1} action disable
+  else
+    if [[ $2 == *"/"* ]] ; then
+      gam update cros query id:${1} org ${2} quickcrosmove False nobatchupdate
+    elif [[ $2 =~ GR$ || $2 =~ GRS$ || $2 =~ EST$ || $2 =~ GRSU$ ]] ; then
+      gam update cros query id:${1} org /171/Elev/${2} quickcrosmove False nobatchupdate
+    elif [[ $2 =~ GY$ || $2 =~ GYS$ || $2 =~ KV$ || $2 =~ SFI$ || $2 =~ SUV$ || $2 =~ YH$ ]] ; then
+      gam update cros query id:${1} org /170/Elev/${2} quickcrosmove False nobatchupdate
+    else
+      echo "unknown org or command"
+    fi
+  fi
+else
+  gam info cros query id:"$1" fields \
+      "deviceid,org,serialnumber,status,notes,annotatedUser,annotatedLocation,annotatedAssetId,model,osversion,lastsync,lastenrollmenttime,firstenrollmenttime,macaddress,autoUpdateExpiration,lastknownnetwork,lastdeprovisiontimestamp,deprovisionreason"
+fi
+}
+
+crosbatch() {
+  cd ~/gam
+  # check if file with extension is given as argument
+  if [[ $1 == *"."* ]] ; then
+    # check if file actually exists
+    if [ ! -f ~/gam/${1} ]; then
+      echo -e "No such file found:\n$1"
+      return
+    fi
+    # check for cros.csv
+    if [ ! -f $HOME/gam/cros.csv ]; then
+      echo "Did not find file 'cros.csv', now downloading..."
+      crosprint "csv"
+    fi
+    # check if cros.csv needs to be "refreshed"
+    if test $(find ~/gam/cros.csv -mmin +480) ; then
+      echo "Updating cros.csv, downloading fresh file..."
+      crosprintdownload
+    fi
+    # clean up inputfile
+    cat ~/gam/$1 | tr -d " " | awk '{ print toupper($0) }' | gsed 's/\x0D$//' | sort | uniq > ~/gam/input_sn.txt
+    count_infile=$(wc -l ~/gam/input_sn.txt | awk '{ print $1 }')
+    crosColumnData=$(csvcut -n cros.csv)
+    serialColumn=$(echo $crosColumnData | ggrep serialNumber | awk '{print $1}' | tr -d ":")
+    deviceIdColumn=$(echo $crosColumnData | ggrep deviceId | awk '{print $1}' | tr -d ":")
+    statusColumn=$(echo $crosColumnData | ggrep deviceId | awk '{print $1}' | tr -d ":")
+    # check what serialnumbers can be found in nightly report
+    while read sn
+      do ggrep -i ",${sn}," ~/gam/cros.csv
+    done < ~/gam/input_sn.txt > ~/gam/cros_found.csv
+    csvcut -c $serialColumn ~/gam/cros_found.csv | awk '{ print toupper($0) }' > ~/gam/sn_found.csv
+    count_outfile=$(wc -l ~/gam/cros_found.csv | awk '{ print $1 }')
+    # compare input to what was found
+    comm -23 ~/gam/input_sn.txt ~/gam/sn_found.csv > ~/gam/cros_notfound.txt
+    notfound=$(wc -l ~/gam/cros_notfound.txt | awk '{ print $1 }')
+    echo -e "${white}Inputfile:${reset} ${green}${count_infile}${reset}\n${yellow}Found:${reset} ${green}${count_outfile}${reset}\n"
+    check_multiple=$(sort ~/gam/sn_found.csv | uniq -c | grep -v '^ *1 ')
+    if [ $check_multiple ] ; then
+      echo -e "${red}WARNING! Multiple matching serial numbers found!"
+      echo $check_multiple | awk '{print $2 " found " $1 " times"}'
+      echo "${reset}"
+      echo ""
+    fi
+    if [ $notfound -ne 0 ] ; then
+      echo "${red}Did not find the following serial numbers:${reset}"
+      cat ~/gam/cros_notfound.txt
+    fi
+    csvcut -c $deviceIdColumn ~/gam/cros_found.csv > ~/gam/crosfile.txt
+    # check "live data" if not "ATEA"
+    if [[ $2 != "ATEA" ]] ; then
+      gam crosfile ~/gam/crosfile.txt print fields status,deviceId,serialNumber,lastSync,model,osVersion,user,orgUnitPath > ~/gam/cros_livedata.csv
+    else
+      echo "ATEA"
+      return
+    fi
+    # search for and remove deprovisioned devices
+    csvgrep -c status -m DEPROVISIONED ~/gam/cros_livedata.csv | csvcut -c deviceId,serialNumber,orgUnitPath > ~/gam/cros_deprovisioned.csv
+    csvgrep -i -c status -m DEPROVISIONED ~/gam/cros_livedata.csv > ~/gam/cros_notdeprovisioned.csv
+    deprovisionedDevices=$(wc -l ~/gam/cros_deprovisioned.csv | awk '{ print $1 }')
+    if [ $deprovisionedDevices -gt 1 ] ; then
+      echo -e "\n${cyan}The following deprovisioned devices were removed from the list:${reset}"
+      cat ~/gam/cros_deprovisioned.csv
+      csvcut -c deviceId ~/gam/cros_livedata.csv | gsed 1d > ~/gam/crosfile.txt
+    fi
+    if [[ $1 == "primary_users_devices.csv" ]] ; then
+      return
+    fi
+    # get orgUnit from name of input file
+    org=${1%.*}
+    org=${org:u}
+    # check what orgunits found CB:S are placed in
+    csvgrep -i -c orgUnitPath -m "$org" ~/gam/cros_notdeprovisioned.csv | csvcut -c serialNumber,orgUnitPath | csvsort -c orgUnitPath > ~/gam/cros_in_other_orgs.csv
+    ggrep -E '0[01]-Chromebook' ~/gam/cros_in_other_orgs.csv > ~/gam/00-Chromebook.csv
+    gsed -i '/0[01]-Chromebook/d' ~/gam/cros_in_other_orgs.csv
+    newChromebooks=$(wc -l ~/gam/00-Chromebook.csv | awk '{ print $1 }')
+    otherorgs=$(wc -l ~/gam/cros_in_other_orgs.csv | awk '{ print $1 }')
+    if [ $newChromebooks -gt 0 ] ; then
+      echo -e "\n${cyan}Found ${newChromebooks} new devices (in OU 00/01-Chromebook)${reset}"
+    fi
+    if [ $otherorgs -gt 1 ] ; then
+      echo -e "\n${cyan}Found devices placed in other OU(s):${reset}"
+      cat ~/gam/cros_in_other_orgs.csv
+    fi
+    if [ $newChromebooks -eq 0 ] && [ $otherorgs -eq 1 ] ; then
+      echo -e "\n${cyan}All devices found are already placed in ${org}${reset}\n"
+    fi
+    echo -e "\n${magenta}To examine the results, look in the file:${reset}\n  ${green}cros_livedata.csv${reset}\n"
+    echo -e "${magenta}To run manual commands:${reset}\n  ${green}gam crosfile crosfile.txt update [e.g. 'action disable' or other commands]${reset}\n"
+    # 1=${1^^}
+    echo -e "${white}To manually specify OU:${reset}\n${green}crosbatch move /orgUnitPath${reset}"
+    echo -e "${white}Or continue with this command:${reset}\n${green}crosbatch move ${org}${reset}"
+    echo -e "${white}To retire correctly placed devices continue with this command:${reset}\n${green}crosbatch retire $org 'ISS-#'${reset}"
+  elif [[ $1 == "move" ]] ; then
+    org=$2:u
+    # 2=${2^^}
+    if [[ $org == *"/"* ]] ; then
+      ou=${2}
+    elif [[ $org =~ GR$ || $org =~ GRS$ || $org =~ GRSU$ || $org =~ EST$ ]] ; then
+      ou="/171/Elev/${org}"
+    elif [[ $org =~ GY$ || $org =~ GYS$ || $org =~ KV$ || $org =~ SFI$ || $org =~ SUV$ || $org =~ YH$ ]] ; then
+      ou="/170/Elev/${org}"
+    else
+      echo "error..."
+      return
+    fi
+    num=$(wc -l ~/gam/crosfile.txt  | awk '{ print $1 }')
+    echo "Move all ${num} devices in 'crosfile.txt' to ${ou}?"
+    echo -e "(y/n)?"
+    read answer
+    if [ "$answer" != "${answer#[Yy]}" ] ; then
+      echo "Now moving all devices to $ou"
+      gsed '1i\id' ~/gam/crosfile.txt > ~/gam/crosfile.csv
+      #gam crosfile ~/gam/crosfile.txt update org $ou quickcrosmove False nobatchupdate && gam print cros limittoou $ou > ~/gam/croscomp.csv
+      gam csv ~/gam/crosfile.csv gam update cros ~~id~~ org $ou quickcrosmove False nobatchupdate
+      sleep 3 && gam print cros limittoou $ou > ~/gam/croscomp.csv
+      ggrep -f ~/gam/crosfile.txt ~/gam/croscomp.csv > ~/gam/croscomp_found.csv
+      ggrep -v -f ~/gam/croscomp_found.csv ~/gam/crosfile.txt > ~/gam/temp_found
+      cros_remain=$(wc -l ~/gam/temp_found  | awk '{ print $1 }')
+      if [[ "$cros_remain" == "0" ]] ; then
+        echo "${num} CB nu flyttade till ${ou}"
+      else
+        mv ~/gam/temp_found ~/gam/crosfile.txt
+        echo "$cros_remain device(s) not moved - please run the last command again"
+      fi
+    else
+      echo "Ok, not performing the move."
+    fi
+  elif [[ $1 == "userlist" || $1 == "primary" ]] ; then
+    if [[ $# -ne 2 ]]; then
+      echo "File must contain no header:\n column 1 - serialnumber (or deviceId)\n column 2 - userID"
+    fi
+    if [[ $2 == *"."* ]] ; then
+      if [ ! -f ~/gam/${2} ]; then
+        echo -e "No such file found:\n$2"
+        return
+      fi
+      # TODO - check if user really needs to be updated, i.e perform check against current user
+      in2csv -f csv ~/gam/${2} | csvcut -c 1,2 | sort | gsed 's/@skola.malmo.se//g' > ~/gam/primary_userlist.csv
+      csvcut -c 1 ~/gam/primary_userlist.csv | uniq | tr -d " " > ~/gam/primary_users_devices.csv
+      # does not work here to use full path!
+      crosbatch primary_users_devices.csv
+      org_name=$2:r:u
+      # insert header in cros_found.csv
+      header=$(head -n 1 cros.csv)
+      gsed -i "1i $header" ~/gam/cros_found.csv
+      csvgrep -c orgUnitPath -m "/${org_name}" ~/gam/cros_found.csv | csvsort -c serialNumber -y 0 > ~/gam/IN_ORG_found.csv
+      csvgrep -i -c orgUnitPath -m "/${org_name}" ~/gam/cros_found.csv | csvcut -c serialNumber,model,orgUnitPath > ~/gam/cros_in_other_orgs.csv
+      inorg=$(wc -l ~/gam/IN_ORG_found.csv | awk '{ print $1 }')
+      otherorgs=$(($(wc -l ~/gam/cros_in_other_orgs.csv | awk '{ print $1 }')-1))
+      if [ $otherorgs -ge 1 ] ; then
+        echo -e "\n${cyan}Found devices placed in other OU(s):${reset}"
+        cat ~/gam/cros_in_other_orgs.csv
+      fi
+      csvcut -c deviceId,serialNumber ~/gam/IN_ORG_found.csv | gsed 1d > ~/gam/IN_ORG_data.csv
+      csvcut -c serialNumber ~/gam/IN_ORG_found.csv | gsed 1d > ~/gam/IN_ORG_sn.csv
+      ggrep -i -f ~/gam/IN_ORG_sn.csv ~/gam/primary_userlist.csv > ~/gam/IN_ORG_match.csv
+      #TODO - make sure the serialNumber matches
+      echo "deviceId,serial,match_serial,user" > ~/gam/IN_ORG_batch_data.csv && paste -d "," ~/gam/IN_ORG_data.csv ~/gam/IN_ORG_match.csv >> ~/gam/IN_ORG_batch_data.csv
+      echo "\n${cyan}OK to update primary user on $(($inorg-1)) CB:s found in org ${org_name}?${reset}"
+      echo -e "(y/n)?"
+      read answer
+      if [ "$answer" != "${answer#[Yy]}" ] ; then
+        echo "Now updating all devices in file 'primary_user_batch.csv'"
+        gam csv ~/gam/IN_ORG_batch_data.csv gam update cros ~~deviceId~~ user ~~user~~
+      else
+        echo "Ok, not performing the update."
+      fi
+    else
+      echo "no valid file found"
+    fi  
+  elif [[ $1 == "retire" ]] ; then
+    if [[ $# -ne 3 ]]; then
+      echo "Illegal number of arguments (${#}), command must contain 3:\ncrosbatch retire XXGR 'Reason for retire device'"
+      return
+    fi
+    # insert header in cros_found.csv
+    header=$(head -n 1 cros.csv)
+    gsed -i "1i $header" ~/gam/cros_found.csv
+    csvgrep -c orgUnitPath -m "${2}" ~/gam/cros_found.csv > ~/gam/retire.csv
+    csvgrep -i -c orgUnitPath -m "${2}" ~/gam/cros_found.csv > ~/gam/not_retired.csv
+    not_retired=$(wc -l ~/gam/not_retired.csv | awk '{ print $1 }')
+    to_retire=$(wc -l ~/gam/retire.csv | awk '{ print $1 }')
+    to_retire=$(expr $to_retire - 1)
+    if [[ $not_retired -gt 1 ]] ; then
+      echo "${yellow}$(($not_retired-1)) device(s) out of scope${reset} (i.e. do not match OU), and will not be retired.\n${magenta}Check what device(s) in file:${reset}\n  ${green}not_retired.csv${reset}\n"
+    fi
+    echo "${cyan}Retire all ${to_retire} devices in 'retire.csv' with reason '$3'?${reset}"
+    echo -e "(y/n)?"
+    read answer
+    if [ "$answer" != "${answer#[Yy]}" ] ; then
+      csvgrep -c status -m "ACTIVE" ~/gam/retire.csv > ~/gam/disable.csv
+      retire_check=$(wc -l ~/gam/disable.csv | awk '{ print $1 }')
+      if [[ $retire_check == "1" ]] ; then
+        echo 'No devices need to be disabled, continuing...'
+      else
+        echo 'First disabling devices...'
+        gam csv ~/gam/disable.csv gam update cros ~~deviceId~~ action disable
+      fi
+      echo 'Now retiring...'
+      gam csv ~/gam/retire.csv gam update cros ~~deviceId~~ user ~~orgUnitPath~~ notes "${3}" ou /RETIRED quickcrosmove False nobatchupdate
+    fi
+  elif [[ $1 == "ATEA" ]] ; then
+    datestr=$(gdate --date="today" +%Y-%m-%d)
+    echo "Notes: \"Avregistrerade enligt ATEA:s listor ${datestr}\""
+    gam update cros file crosfile.txt notes "Avregistrerade enligt ATEA:s listor ${datestr}"
+    echo "Writing user/orgUnitPath"
+    gam csv cros_notdeprovisioned.csv gam update cros ~~deviceId~~ user ~~orgUnitPath~~
+    echo "Deprovisioning retiring device"
+    gam update cros file crosfile.txt action deprovision_retiring_device acknowledge_device_touch_requirement
+    echo "Moving to orgUnit: /DEPROVISIONED"
+    gam update cros file crosfile.txt ou /DEPROVISIONED quickcrosmove False nobatchupdate
+  else
+    echo -e "Please specify a file containing one serial number per row!"
+    echo -e "Example: crosbatch SPGR.txt"
+  fi
+} # crosbatch
+
+crosdep() {
+  gam update cros $1 action deprovision_same_model_replace acknowledge_device_touch_requirement
+}
+
+# list all CB in orgUnit
+crosorg() {
+  gam print cros limittoou $1 fields macAddress,lastSync,lastEnrollmentTime,serialNumber,status
+}
+
+## WeLib self service mode for Chromebook
+welib() {
+    this_cros=$(gam print cros query id:"$1" fields org)
+    echo $this_cros
+    this_org=$(echo $this_cros | awk -F "/" 'END{print $NF}')
+    this_id=$(echo $this_cros | awk -F "," 'END{print $1}')
+    echo $this_org
+    echo $this_id
+    if [[ $this_org =~ GR$ || $this_org =~ GRS$ ]] ; then
+      welib_org="/171/Elev/01-WeLib"
+    elif [[ $this_org =~ GY$ ]] ; then
+      welib_org="/170/Elev/01-WeLib-GY"
+    else
+      welib_org="/170/Elev/01-WeLib-VUX"
+    fi
+    echo "gam update cros ${this_id} user ${this_org} location ${this_org} org ${welib_org} notes \"${this_org} självbetjäningsdator\""
+}
+## -- END CROS COMMANDS --

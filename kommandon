@@ -650,3 +650,95 @@ welib() {
     echo "gam update cros ${this_id} user ${this_org} location ${this_org} org ${welib_org} notes \"${this_org} självbetjäningsdator\""
 }
 ## -- END CROS COMMANDS --
+
+
+## *******************************************************************************************
+## -- LOGS -- 
+## *******************************************************************************************
+
+# Search for user/device activities on Chromebooks
+cblogin() {
+  if [ $# -eq 0 ] ; then
+    searchfor='' # show usage
+  elif [[ $1 =~ '^utb|\.' ]]; then
+    searchfor='userid'
+  else
+    searchfor='crosdevice'
+  fi
+  if [[ $2 == "full" ]]; then
+      searchfor="${searchfor}_full"
+  fi
+  case "$searchfor" in
+  userid)
+      gam report chrome event CHROME_OS_LOGIN_EVENT filter "DEVICE_USER==${1}@skola.malmo.se" | csvcut -c DEVICE_NAME,id.time,DIRECTORY_DEVICE_ID | column -t -s,
+      ;;
+  userid_full)
+      gam report chrome filter "DEVICE_USER==${1}@skola.malmo.se" | csvcut -c name,DEVICE_NAME,id.time,DIRECTORY_DEVICE_ID | column -t -s,
+      ;;
+  crosdevice)
+      gam report chrome event CHROME_OS_LOGIN_EVENT filter "DEVICE_NAME==${1}" | csvcut -c DEVICE_NAME,DEVICE_USER,id.time,DIRECTORY_DEVICE_ID | column -t -s,
+      ;;
+  crosdevice_full)
+      gam report chrome filter "DEVICE_NAME==${1}" | csvcut -c name,DEVICE_USER,id.time,DIRECTORY_DEVICE_ID | column -t -s,
+      ;;
+  *)
+      echo "Usage:\n${green}$0 [userID|serialnumber]${reset} (search for user/device activities)\
+      \n${green}$0 [userID|serialnumber] ${yellow}full${reset} (search for all the user/device activities)"
+      ;;
+ esac
+}
+
+# needed? "report cros [serialNumber]" does the same thing...?
+croslog() {
+  gam report admin user all filter "DEVICE_SERIAL_NUMBER==${1}" #| csvcut -C 'DEVICE_TYPE,actor.callerType,actor.profileId,id.applicationName,id.customerId,id.uniqueQualifier,type'
+}
+
+# check if staff-groups updated by admins
+kollagrupper() {
+  startdate=$(gdate --date='1 month ago' '+%Y-%m-%d')
+  gam report groupsenterprise org /ADMINS/SKOLADMINS events add_user,remove_user start "$startdate" | \
+  csvcut -c 'id.time,actor.email,group_id,name,member_id' | csvsort -c 'id.time' -r -y 0 | ggrep ".personal@" | \
+  gsed 's/T/,/g' | gsed -E 's/\+.*0,/,/g' | \
+  ggrep -E -v 'maapps|,vo\.personal|,kvm\.personal|,HEGY_endast_' | \
+  gsed '1 i\DATUM,TID,ADMIN,GRUPP,HÄNDELSE,ANVÄNDARE' | column -t -s,
+}
+
+logdate() {
+  gam report admin start "$1"T00:00:00.000Z end "$1"T23:59:59.999Z> ~/gam/${1}\ -\ Admin\ Activity\ Report.csv
+  echo "Log downloaded:\n${1}\ -\ Admin\ Activity\ Report.csv"
+}
+
+# search in "live" google logs
+report() {
+  if [[ $1 == "group" ]] ; then
+    group=$(echo "$2" | cut -d'@' -f1)
+    gam report admin user all filter "GROUP_EMAIL==${2%%@*}@skola.malmo.se" \
+        | csvcut -C actor.callerType,actor.profileId,id.customerId,id.uniqueQualifier,ipAddress,type,id.applicationName
+  elif [[ $1 == "full" ]] ; then
+    gam report admin user all filter "USER_EMAIL==${2%%@*}@skola.malmo.se"
+  elif [[ $1 == "cros" ]] ; then
+    gam report admin user all filter "DEVICE_SERIAL_NUMBER==${2}" \
+        | csvcut -C DEVICE_TYPE,actor.callerType,actor.profileId,id.applicationName,id.customerId,id.uniqueQualifier,type
+  else
+    echo "USER_EMAIL==${1%%@*}@skola.malmo.se"
+    gam report admin user all filter "USER_EMAIL==${1%%@*}@skola.malmo.se" \
+        | csvcut -C actor.callerType,actor.profileId,id.customerId,id.uniqueQualifier,ipAddress,type,id.applicationName \
+        | awk -F, -v green="$fg[green]" -v yellow="$bg[yellow]$fg[black]" -v reset="$reset_color" \
+        '{{printf "%s%s", yellow,$1} ; {printf "%s%s|", reset,green} ; \
+        for(i=2;i<=4;i++){printf "%s%s|", green,$i} ; {printf "%s", reset} ; for(i=5;i<=NF;i++){printf "%s|", $i} ; printf "\n"}' \
+        | sed -E 's/\.[[:digit:]]{3}Z\|//g' | sed 's/\"\"\"//g' | gsed -E 's/work:|work: //Ig'
+  fi
+}
+
+todayslog() {
+  datestr=$(gdate --date="today" +%Y-%m-%d)
+  #title="${datestr} - Admin Activity Report"
+  gam report admin start "$datestr"T00:00:00.000Z > ~/gam/${datestr}-AdminActivityReport.csv
+}
+
+todayslogCPI() {
+  datestr=$(gdate --date="today" +%Y-%m-%d)
+  #title="${datestr} - Admin Activity Report"
+  gam select CPI report admin start "$datestr"T00:00:00.000Z > ~/gam/${datestr}-CPI-AdminActivityReport.csv
+}
+## -- END LOGS --

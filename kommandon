@@ -3,13 +3,17 @@ export NLS_LANG=.AL32UTF8
 
 ## GLOBAL ##
 alias load='source ~/.zshrc'
+alias reload='source ~/.zshrc'
+alias help='list_kommandon'
 ## first add sourcing of this file in '~/.zshrc'
 
 ## LOAD CONFIG
 AD_URL=$(sed -n '1p' ~/gam/.commandconfig.txt)
 USERFILE=$(sed -n '2p' ~/gam/.commandconfig.txt)
 CROSFILE=$(sed -n '3p' ~/gam/.commandconfig.txt)
-AD_USER=$(sed -n '4p' ~/gam/.commandconfig.txt)
+USERIDFILE=$(sed -n '4p' ~/gam/.commandconfig.txt)
+SUPERUSERSFILE=$(sed -n '5p' ~/gam/.commandconfig.txt)
+AD_USER=$(sed -n '6p' ~/gam/.commandconfig.txt)
 
 ## load colors ##
 autoload colors; colors
@@ -23,73 +27,127 @@ blue="$bg[blue]$fg[black]"
 reset="$reset_color"
 
 ## Extens-db ##
-alias extens='~/gam/./sql.sh'
-alias anst='~/gam/./sql.sh anst'
-alias anv='~/gam/./sql.sh anv'
-alias EMAIL='~/gam/./sql.sh EMAIL'
-alias persgr='~/gam/./sql.sh persgr'
-alias pnr='~/gam/./sql.sh pnr'
-alias utbgr='~/gam/./sql.sh utbgr'
+alias anst='~/gam/./sql.sh anst 2> /dev/null'
+alias anv='~/gam/./sql.sh anv 2> /dev/null'
+alias EMAIL='~/gam/./sql.sh EMAIL 2> /dev/null'
+alias extens='~/gam/./sql.sh 2> /dev/null'
+alias persgr='~/gam/./sql.sh persgr 2> /dev/null'
+alias pnr='~/gam/./sql.sh pnr 2> /dev/null'
+alias utbgr='~/gam/./sql.sh utbgr 2> /dev/null'
+alias utbgrupp='~/gam/./sql.sh utbgrupp 2> /dev/null'
 
-## EGIL ##
+### --- EGIL/STAGING ---
 alias egil='~/gam/./egil.sh'
+alias staging='~/gam/./staging.sh'
 
-## GAM ##
-alias user='gam info user'
-alias group='gam info group'
-alias unsuspend='gam unsuspend user'
-alias gamversion='gam version checkrc 2> /dev/null ; if [ $? -eq 0 ] ; then echo "OK" ; else echo "update needed" && ; fi'
+### --- GAM aliases ---
 alias allgroups='groupfile="allgroups$(gdate '"'"'+%Y%m%d'"'"').csv" && gam print groups fields "email,id,name,description,directMembersCount,adminCreated,aliases" > $groupfile && csvgrep -c adminCreated -m True $groupfile > admin${groupfile}'
+alias gamupdate='~/bin/gamadv-xtd3/./gam version checkrc 2> /dev/null ;
+  if [ $? -eq 0 ] ; then echo "GAM is already latest version, not updating!" ;
+  else VER=`gam version simple` && mv ~/bin/gamadv-xtd3/gam ~/bin/gam${VER} && bash <(curl -s -S -L https://git.io/gam-install) -l -d ~/bin/gamadv-xtd3 -s -p false ; fi'
+alias galcheck='gam print users query employmentData.GAL=false fields org,gal schemas employmentData.GAL | ggrep -Ev "/INAKTIVA|/Vilande" | ggrep "True,False"'
+alias gaminfo='gam version extended'
+alias gamversion='gam version checkrc 2> /dev/null ; if [ $? -eq 0 ] ; then echo "OK" ; else echo "update needed" && ; fi'
+alias reports='/usr/bin/open -a "/Applications/Google Chrome.app" "https://drive.google.com/drive/u/0/folders/0B3WTCISsxnRqWWhXTjBBUVM0UUU"'
+alias unsuspend='gam unsuspend user'
 
-## KOMMANDON ##
-help() {
-  list_kommandon
-}
+### --- OTHER ALIASES ---
+## ZeroTouch activities
+alias zerotouch='gam report admin user all event "PRE_PROVISION_CHROME_OS_DEVICE"'
+alias gservice='gam report admin user chromeos-enterprise-mgmt@system.gserviceaccount.com'
+
+
+### *******************************************************************************************
+### -- BASIC COMMANDS -- 
+### *******************************************************************************************
 
 list_kommandon() {
-  echo "${cyan}Examples:${reset}"
-  echo "${green}help${reset} //Show this list"
-  echo "${green}reload${reset} //Reload after update"
-  echo "${green}kommandoupdate${reset} //Update kommandon"
-  echo "${green}egilupdate${reset} //Update EGIL-commands"
+  echo "${cyan}AVAILABLE COMMANDS:${reset}"
+  echo "${green}AD cn${reset} : Search AD based on userID, e.g. 'AD cn matalq'"
+  echo "${green}AD email${reset} : Search AD based on email (partial match)"
+  echo "${green}AD eppn${reset} : Search AD based on EPPN"
+  echo "${green}AD name${reset} : Search AD based on name, e.g. 'AD name Mattias Alqmawi'"
+  echo "${green}addsuperuser${reset} : Add a new superuser, updates the user and the corresponding admin account"
+  echo "${green}allgroups${reset} : Prints csv-file with all groups"
+  echo "${green}alluserids${reset} : Download the file containing all historically unique GoogleID:s"
+  echo "${green}approve [AppID]${reset} : Opens the 'google play for work' URL (activate admin profile in chrome first)"
+  echo "${green}clogin${reset} : Report CB-logins for a user or device"
+  echo "${green}cbmanager${reset} : List and manage cbmanagers"
+  echo "${green}classroom${reset} : List and manage a users Classrooms"
+  echo "${green}cros${reset} : Show and manage specific chromebook"
+  echo "${green}crosbatch${reset} : Manage chromebooks based on lists from schools"
+  echo "${green}crosprint${reset} : Download latest cros file"
+  echo "${green}delsuperuser${reset} : Remove a superuser"
+  echo "${green}egilupdate${reset} : Update EGIL-commands"
+  echo "${green}gal${reset} : Search user in GAL; [Firstname] [Lastname]"
+  echo "${green}galcheck${reset} : Shows GAL-mismatches (i.e. to be hidden from GAL)"
+  echo "${green}gamversion${reset} : Check if updated version is available online"
+  echo "${green}group${reset} : Google info regarding specific group"
+  echo "${green}gservice${reset} : Check logs for ATEA:s use of gserviceaccount"
+  echo "${green}invites${reset} : Use if classroom can not be transferred (deletes invitation)"
+  echo "${green}kollagrupper${reset} : Check if admins have made changes to school groups"
+  echo "${green}kommandoupdate${reset} : Update kommandon"
+  echo "${green}logdate [YYYY-MM-DD]${reset} : Download csv-log for a specific date, e.g. 'logdate 2026-01-13'"
+  echo "${green}reload | load${reset} : Use after updating via github"
+  echo "${green}resource${reset} : Returns gam commands for creating resource calendar"
+  echo "${green}superusers${reset} : Shows a summary/list of all superusers"
+  echo "${green}todayslog${reset} : Download csv-log for today (until 'now')"
+  echo "${green}transfer${reset} : Create file transfer via gam"
+  echo "${green}undelete${reset} : Undelete user and place in orgUnit '/TEMP'"
+  echo "${green}unsuspend${reset} : Unsuspends user (without changing orgUnit)"
+  echo "${green}user${reset} : Google info regarding specific user"
+  echo "${green}userid${reset} : Search for a user based on AD-userID, e.g. 'ahmbys'"
+  echo "${green}userprint${reset} : Download latest user file"
+  echo "${green}welib${reset} : Returns gam command for activiating 'självservice'"
+  echo "${green}zerotouch${reset} : Check logs for zerotouch-registered devices"
+  echo ""
+  echo "${white}Most commands: type [command] for more help.${reset}"
+  echo ""
 }
 
-reload() {
-  source ~/.zshrc
+
+### *******************************************************************************************
+### -- GAM COMMANDS -- 
+### *******************************************************************************************
+
+# Search for user by userID
+userid() {
+  gam info users query employmentData.userID=${1}
 }
 
-kommandoupdate() {
-  curl https://raw.githubusercontent.com/mattiasbystedt/kommandon/master/kommandon > ~/.kommandon
+# approve new Android app
+approve() {
+  open -a "Google Chrome" "https://play.google.com/work/apps/details?id=${1}"
 }
 
-egilupdate() {
-  curl https://raw.githubusercontent.com/mattiasbystedt/egil-kommandon/master/egil.sh > ~/gam/egil.sh
-}
-
-## GAM COMMANDS ##
-
-# Search for user/device activities on Chromebooks
-cblogin() {
-  if [ $# -eq 0 ] ; then
-    echo "Usage:"
-    echo "cblogin utbtestes4 (search for user activities)"
-    echo "cblogin utbtestes4 full (search for all the users activities)"
-    echo "cblogin cb PF3LJQRH (search for device activities)"
-    echo "cblogin cb_full PF3LJQRH (search for device activities)"
-  elif [[ $1 == "cb" ]] ; then
-    gam report chrome event CHROME_OS_LOGIN_EVENT filter "DEVICE_NAME==${2}" |  csvcut -c DEVICE_NAME,DEVICE_USER,id.time,DIRECTORY_DEVICE_ID | column -t -s,
-  elif [[ $1 == "cb_full" ]] ; then
-    gam report chrome filter "DEVICE_NAME==${2}" |  csvcut -c name,DEVICE_USER,id.time,DIRECTORY_DEVICE_ID | column -t -s,
-  elif [[ $2 == "full" ]] ; then
-    gam report chrome filter "DEVICE_USER==${1}@skola.malmo.se" |  csvcut -c name,DEVICE_NAME,id.time,DIRECTORY_DEVICE_ID | column -t -s,
+# list and manage CB Managers
+cbmanager() {
+  if [[ $1 == "add" ]] ; then
+    echo "adding ${2} to cbamanager with scope ${3}"
+    gam update user ${2} cbManager.manageOrgs "${3}" cbManager.authorized true
+  elif [[ $1 == "del" || $1 == "delete" || $1 == "remove" ]] ; then
+    echo "removing ${2} from cbamanager"
+    gam update user ${2} clearschema cbManager
   else
-    gam report chrome event CHROME_OS_LOGIN_EVENT filter "DEVICE_USER==${1}@skola.malmo.se" |  csvcut -c DEVICE_NAME,id.time,DIRECTORY_DEVICE_ID | column -t -s,
+    gam group cbmanager print users fields orgUnitPath customschemas cbManager > cbmanager.csv
+    printf "--------------------------------------------------------------\n\n"
+    cat cbmanager.csv | gsed 's/customSchemas\.cbManager\.//g' | gsed 's/UnitPath//g' | gsed 's/primaryE/e/g' | \
+    gsed 's/@skola.malmo.se//g' | gsed -r 's/\/Personal\/[a-öA-Ö]+//g' | gsed 's/@skola.malmo.se//g' | \
+    gsed 's/,\/170,/,170,/g' | gsed 's/,\/171,/,171,/g' | csvsort -S -c org,manageOrgs | \
+    csvcut -c email,org,manageOrgs | csvformat -D ";" | tr -d '\"' | \
+    ggrep -E -v '^utbtes|^pi\.admin' | \
+    awk -F ";" '{ printf("%-40s%-10s%-15s\n", $1, $2, $3); }' | \
+    awk -v bld=$(tput bold) -v rst=$(tput sgr0) 'NR == 1{$0 = bld$0rst} 1'
   fi
 }
 
-# Search admin logs for CB commands/actions
-croslog() {
-  gam report admin user all filter "DEVICE_SERIAL_NUMBER==${1}" #| csvcut -C 'DEVICE_TYPE,actor.callerType,actor.profileId,id.applicationName,id.customerId,id.uniqueQualifier,type'
+## needed for command resource()
+extenstoou() {
+  local __resultvar=$1
+  local myresult=${__resultvar//å/a}
+  local myresult=${myresult//ä/a}
+  local myresult=${myresult//ö/o}
+  echo $myresult
 }
 
 # Lookup full name in Global Address List
@@ -98,404 +156,70 @@ gal() {
   gam show people query "${fullstring}"
 }
 
-# Search for user by userID
-userid() {
-  gam info users query employmentData.userID=${1}
-}
-
-# Search in logs
-report() {
-  if [[ $1 == "group" ]] ; then
-    #echo ${2%%@*}
-    group=$(echo "$2" | cut -d'@' -f1)
-    #gam report admin user all filter "GROUP_EMAIL==${2%%@*}@skola.malmo.se" | cut -d ',' -f 1,3,7,11-
-    gam report admin user all filter "GROUP_EMAIL==${2%%@*}@skola.malmo.se" \
-        | csvcut -C actor.callerType,actor.profileId,id.customerId,id.uniqueQualifier,ipAddress,type,id.applicationName
-  elif [[ $1 == "full" ]] ; then
-    gam report admin user all filter "USER_EMAIL==${2%%@*}@skola.malmo.se"
-  elif [[ $1 == "cros" ]] ; then
-    gam report admin user all filter "DEVICE_SERIAL_NUMBER==${2}" \
-        | csvcut -C DEVICE_TYPE,actor.callerType,actor.profileId,id.applicationName,id.customerId,id.uniqueQualifier,type
-  else
-    echo "USER_EMAIL==${1%%@*}@skola.malmo.se"
-    gam report admin user all filter "USER_EMAIL==${1%%@*}@skola.malmo.se" \
-        | csvcut -C actor.callerType,actor.profileId,id.customerId,id.uniqueQualifier,ipAddress,type,id.applicationName \
-        | awk -F, -v green="$fg[green]" -v yellow="$bg[yellow]$fg[black]" -v reset="$reset_color" \
-        '{{printf "%s%s", yellow,$1} ; {printf "%s%s|", reset,green} ; \
-        for(i=2;i<=4;i++){printf "%s%s|", green,$i} ; {printf "%s", reset} ; for(i=5;i<=NF;i++){printf "%s|", $i} ; printf "\n"}' \
-        | sed -E 's/\.[[:digit:]]{3}Z\|//g' | sed 's/\"\"\"//g' | gsed -E 's/work:|work: //Ig'
-  fi
-}
-
-# List or transfer classroom/courses
-classroom() {
-  if [[ ($# -eq 1) ]] ; then
-    WORK_DIR=`gmktemp -d "$HOME/gam/tmpXXXXX"`
-    if [[ ! "$WORK_DIR" || ! -d "$WORK_DIR" ]]; then
-      echo "Could not create temp dir"
-      return
-    fi
-    gam redirect csv "$WORK_DIR"/tmp1 columndelimiter "|" print courses teacher $1 fields "id,name,coursestate,descriptionheading,section,alternateLink,ownerid"
-    cat "$WORK_DIR"/tmp1 | tail -n +2 | awk -v id="id:" -F"|" '{print id$NF}' | sort | uniq > "$WORK_DIR"/tmp2
-    gam print users select file "$WORK_DIR"/tmp2 fields "id" | tail -n +2 > "$WORK_DIR"/tmp3
-    in=$(wc -l "$WORK_DIR"/tmp2  | awk '{ print $1 }')
-    out=$(wc -l "$WORK_DIR"/tmp3  | awk '{ print $1 }')
-    if [ ! $in = $out ] ; then
-      echo -e "\n----\nN.B. Some classroom owners are deleted (orphaned/corrupt classrooms found)\n----\n"
-    fi
-    while read r ; do id=$(echo $r | awk -F, '{print $2}') && owner=$(echo $r | awk -F, '{print $1}') && gsed -i "s/${id}/${owner}/g" "$WORK_DIR"/tmp1 ; done < "$WORK_DIR"/tmp3
-    mv "$WORK_DIR"/tmp1 ~/gam/${1}.teacher.csv
-    echo -e ""
-    gsed -i 's/https:\/\/classroom.google.com\/c\///g' ~/gam/${1}.teacher.csv
-    cat ~/gam/${1}.teacher.csv
-    trash "$WORK_DIR"
-  # check if single classroom to transfer
-  elif [[ ($# -eq 2) ]] ; then
-    if [[ $2 =~ ^[0-9]+$ ]] ; then
-      course=$2
-      new_owner=$1
-    elif [[ $1 =~ ^[0-9]+$ ]] ; then
-      course=$1
-      new_owner=$2
-    # transfer all classrooms
-    else
-      owner=$(gam info user ${1} fields id | grep 'Google Unique ID' | awk '{print $4}')
-      echo "Getting all courses that ${1} owns..."
-      gam print courses teacher ${1} fields "id,name,courseState,ownerId" | ggrep -P "${owner}|ownerId" | tee /dev/tty > ~/gam/${1}.classroom.csv
-      num=$(wc -l ~/gam/${1}.classroom.csv | awk '{print $1}')
-      num=$(expr $num - 1)
-      echo ""
-      echo "Transfer all ${num} classrooms owned by ${1} to ${2}?"
-      echo -e "(y/n)?"
-      read answer
-      if [ "$answer" != "${answer#[Yy]}" ] ;then
-        echo "OK, now transferring..."
-        gam csv ~/gam/${1}.classroom.csv gam course ~~id~~ add teachers $2
-        gam csv ~/gam/${1}.classroom.csv gam update course ~~id~~ owner $2
-        return
-      else
-        echo "OK, not performing command!"
-        return
-      fi
-    fi
-    # transfer single classroom
-    course_info=$(gam info course $course fields "ownerId,name")
-    course_owner=$(echo "$course_info" | ggrep "ownerEmail: " | awk '{print $2}')
-    course_ownerID=$(echo "$course_info" | ggrep "ownerId: " | awk '{print $2}')
-    course_name=$(echo "$course_info" | ggrep "name: " | awk '{print $2}')
-    echo -e "Transfer classroom \"${course_name}\" owned by ${course_owner} to ${new_owner}?"
-    echo -e "(y/n)?"
-    read answer
-    if [ "$answer" != "${answer#[Yy]}" ] ;then
-      echo "OK, now transferring..."
-      gam course $course add teachers $new_owner
-      gam update course $course owner $new_owner
-      return
-    else
-      echo "OK, not performing command!"
-      return
-    fi    
-  else
-    echo "  List a users Classrooms:\nclassroom user\n  Transfer all Classrooms a user owns to another user:\nclassroom user new_owner\n  Transfer a single Classroom:\nclassroom courseId new_owner"
-  fi
-}
-
-# download latest user report including a copy in Excel format
-userprint() {
-  now=$(gdate '+%Y%m%d')
-  gam user admin get drivefile ${USERFILE} gsheet "userprint03.csv" targetfolder ~/gam targetname "userprint${now}.csv"
-  csvformat -D "|" userprint${now}.csv | gsed 's/\r$//' | gawk -F"|" '{print $0 "|" substr($5, 0, 6)}' | csvformat -d "|" -D "," > userprint_org.csv
-  ssconvert ~/gam/userprint_org.csv ~/gam/userprint${now}.xlsx
-}
-
-# "crosprint" for full CB report, "crosprint csv" for minimal csv file
-crosprint() {
+# Show group info
+group() {
+  #echo "${@[$#]}"
   if [ $# -eq 0 ] ; then
-    crosprintcheck
-    crosprintfile="crosprint$(gdate '+%Y%m%d').xlsx"
-    gsed 's/\r$//' crosprint.csv | gawk -F, '{print $0 "," substr($2, 0, 6)}' > crosorg.csv
-    ssconvert crosorg.csv $crosprintfile
-  elif [[ $1 =~ ^(csv)$ ]] ; then
-    checkdate=$(gam user admin show fileinfo ${CROSFILE} fields modifiedTime | ggrep modifiedTime | awk '{print $2}')
-    echo "Online file last updated ${checkdate[(ws:T:)1]}"
-    gam user admin get drivefile ${CROSFILE} csvsheet crosprint.csv targetfolder ~/gam targetname crosprint.csv overwrite true \
-         && csvcut -c status,deviceId,serialNumber,lastSync,model,osVersion,orgUnitPath ~/gam/crosprint.csv > ~/gam/cros.csv
-  fi
-}
-
-crosprintcheck() {
-  if [ ! -f $HOME/gam/crosprint.csv ]; then
-    echo "Did not find file 'crosprint.csv', now downloading csv file..."
-    crosprintdownload
-  else 
-    # check if cros.csv needs to be "refreshed"
-    if test $(find ~/gam/crosprint.csv -mmin +480) ; then
-      echo "Updating crosprint.csv, downloading fresh file..."
-      crosprintdownload
-    else
-      echo "fresh crosprint found, not downloading..."  
-    fi
-  fi
-}
-
-crosprintdownload() {
-  checkdate=$(gam user admin show fileinfo ${CROSFILE} fields modifiedTime | ggrep modifiedTime | awk '{print $2}')
-  echo "Online file last updated ${checkdate[(ws:T:)1]}"
-  gam user admin get drivefile ${CROSFILE} csvsheet crosprint.csv targetfolder ~/gam targetname crosprint.csv overwrite true \
-      && csvcut -c status,deviceId,serialNumber,lastSync,model,osVersion,orgUnitPath ~/gam/crosprint.csv > ~/gam/cros.csv
-}
-
-# crosbatch
-crosbatch() {
-  cd ~/gam
-  # check if file with extension is given as argument
-  if [[ $1 == *"."* ]] ; then
-    # check if file actually exists
-    if [ ! -f ~/gam/${1} ]; then
-      echo -e "No such file found:\n$1"
-      return
-    fi
-    # check for cros.csv
-    if [ ! -f $HOME/gam/cros.csv ]; then
-      echo "Did not find file 'cros.csv', now downloading..."
-      crosprint "csv"
-    fi
-    # check if cros.csv needs to be "refreshed"
-    if test $(find ~/gam/cros.csv -mmin +480) ; then
-      echo "Updating cros.csv, downloading fresh file..."
-      crosprintdownload
-    fi
-    # clean up inputfile
-    cat ~/gam/$1 | tr -d " " | awk '{ print toupper($0) }' | gsed 's/\x0D$//' | sort | uniq > ~/gam/input_sn.txt
-    count_infile=$(wc -l ~/gam/input_sn.txt | awk '{ print $1 }')
-    crosColumnData=$(csvcut -n cros.csv)
-    serialColumn=$(echo $crosColumnData | ggrep serialNumber | awk '{print $1}' | tr -d ":")
-    deviceIdColumn=$(echo $crosColumnData | ggrep deviceId | awk '{print $1}' | tr -d ":")
-    statusColumn=$(echo $crosColumnData | ggrep deviceId | awk '{print $1}' | tr -d ":")
-    # check what serialnumbers can be found in nightly report
-    while read sn
-      do ggrep -i ",${sn}," ~/gam/cros.csv
-    done < ~/gam/input_sn.txt > ~/gam/cros_found.csv
-    csvcut -c $serialColumn ~/gam/cros_found.csv | awk '{ print toupper($0) }' > ~/gam/sn_found.csv
-    count_outfile=$(wc -l ~/gam/cros_found.csv | awk '{ print $1 }')
-    # compare input to what was found
-    comm -23 ~/gam/input_sn.txt ~/gam/sn_found.csv > ~/gam/cros_notfound.txt
-    notfound=$(wc -l ~/gam/cros_notfound.txt | awk '{ print $1 }')
-    echo -e "${white}Inputfile:${reset} ${green}${count_infile}${reset}\n${yellow}Found:${reset} ${green}${count_outfile}${reset}\n"
-    check_multiple=$(sort ~/gam/sn_found.csv | uniq -c | grep -v '^ *1 ')
-    if [ $check_multiple ] ; then
-      echo -e "${red}WARNING! Multiple matching serial numbers found!"
-      echo $check_multiple | awk '{print $2 " found " $1 " times"}'
-      echo "${reset}"
-      echo ""
-    fi
-    if [ $notfound -ne 0 ] ; then
-      echo "${red}Did not find the following serial numbers:${reset}"
-      cat ~/gam/cros_notfound.txt
-    fi
-    csvcut -c $deviceIdColumn ~/gam/cros_found.csv > ~/gam/crosfile.txt
-    # check "live data" if not "ATEA"
-    if [[ $2 != "ATEA" ]] ; then
-      gam crosfile ~/gam/crosfile.txt print fields status,deviceId,serialNumber,lastSync,model,osVersion,user,orgUnitPath > ~/gam/cros_livedata.csv
-    else
-      echo "ATEA"
-      return
-    fi
-    # search for and remove deprovisioned devices
-    csvgrep -c status -m DEPROVISIONED ~/gam/cros_livedata.csv | csvcut -c deviceId,serialNumber,orgUnitPath > ~/gam/cros_deprovisioned.csv
-    csvgrep -i -c status -m DEPROVISIONED ~/gam/cros_livedata.csv > ~/gam/cros_notdeprovisioned.csv
-    deprovisionedDevices=$(wc -l ~/gam/cros_deprovisioned.csv | awk '{ print $1 }')
-    if [ $deprovisionedDevices -gt 1 ] ; then
-      echo -e "\n${cyan}The following deprovisioned devices were removed from the list:${reset}"
-      cat ~/gam/cros_deprovisioned.csv
-      csvcut -c deviceId ~/gam/cros_livedata.csv | gsed 1d > ~/gam/crosfile.txt
-    fi
-    if [[ $1 == "primary_users_devices.csv" ]] ; then
-      return
-    fi
-    # get orgUnit from name of input file
-    org=${1%.*}
-    org=${org:u}
-    # check what orgunits found CB:S are placed in
-    csvgrep -i -c orgUnitPath -m "$org" ~/gam/cros_notdeprovisioned.csv | csvcut -c serialNumber,orgUnitPath | csvsort -c orgUnitPath > ~/gam/cros_in_other_orgs.csv
-    ggrep -E '0[01]-Chromebook' ~/gam/cros_in_other_orgs.csv > ~/gam/00-Chromebook.csv
-    gsed -i '/0[01]-Chromebook/d' ~/gam/cros_in_other_orgs.csv
-    newChromebooks=$(wc -l ~/gam/00-Chromebook.csv | awk '{ print $1 }')
-    otherorgs=$(wc -l ~/gam/cros_in_other_orgs.csv | awk '{ print $1 }')
-    if [ $newChromebooks -gt 0 ] ; then
-      echo -e "\n${cyan}Found ${newChromebooks} new devices (in OU 00/01-Chromebook)${reset}"
-    fi
-    if [ $otherorgs -gt 1 ] ; then
-      echo -e "\n${cyan}Found devices placed in other OU(s):${reset}"
-      cat ~/gam/cros_in_other_orgs.csv
-    fi
-    if [ $newChromebooks -eq 0 ] && [ $otherorgs -eq 1 ] ; then
-      echo -e "\n${cyan}All devices found are already placed in ${org}${reset}\n"
-    fi
-    echo -e "\n${magenta}To examine the results, look in the file:${reset}\n  ${green}cros_livedata.csv${reset}\n"
-    echo -e "${magenta}To run manual commands:${reset}\n  ${green}gam crosfile crosfile.txt update [e.g. 'action disable' or other commands]${reset}\n"
-    # 1=${1^^}
-    echo -e "${white}To manually specify OU:${reset}\n${green}crosbatch move /orgUnitPath${reset}"
-    echo -e "${white}Or continue with this command:${reset}\n${green}crosbatch move ${org}${reset}"
-    echo -e "${white}To retire correctly placed devices continue with this command:${reset}\n${green}crosbatch retire $org 'ISS-#'${reset}"
-  elif [[ $1 == "move" ]] ; then
-    org=$2:u
-    # 2=${2^^}
-    if [[ $org == *"/"* ]] ; then
-      ou=${2}
-    elif [[ $org =~ GR$ || $org =~ GRS$ || $org =~ GRSU$ || $org =~ EST$ ]] ; then
-      ou="/171/Elev/${org}"
-    elif [[ $org =~ GY$ || $org =~ GYS$ || $org =~ KV$ || $org =~ SFI$ || $org =~ SUV$ || $org =~ YH$ ]] ; then
-      ou="/170/Elev/${org}"
-    else
-      echo "error..."
-      return
-    fi
-    num=$(wc -l ~/gam/crosfile.txt  | awk '{ print $1 }')
-    echo "Move all ${num} devices in 'crosfile.txt' to ${ou}?"
-    echo -e "(y/n)?"
-    read answer
-    if [ "$answer" != "${answer#[Yy]}" ] ; then
-      echo "Now moving all devices to $ou"
-      gsed '1i\id' ~/gam/crosfile.txt > ~/gam/crosfile.csv
-      #gam crosfile ~/gam/crosfile.txt update org $ou quickcrosmove False nobatchupdate && gam print cros limittoou $ou > ~/gam/croscomp.csv
-      gam csv ~/gam/crosfile.csv gam update cros ~~id~~ org $ou quickcrosmove False nobatchupdate
-      sleep 3 && gam print cros limittoou $ou > ~/gam/croscomp.csv
-      ggrep -f ~/gam/crosfile.txt ~/gam/croscomp.csv > ~/gam/croscomp_found.csv
-      ggrep -v -f ~/gam/croscomp_found.csv ~/gam/crosfile.txt > ~/gam/temp_found
-      cros_remain=$(wc -l ~/gam/temp_found  | awk '{ print $1 }')
-      if [[ "$cros_remain" == "0" ]] ; then
-        echo "${num} CB nu flyttade till ${ou}"
-      else
-        mv ~/gam/temp_found ~/gam/crosfile.txt
-        echo "$cros_remain device(s) not moved - please run the last command again"
-      fi
-    else
-      echo "Ok, not performing the move."
-    fi
-  elif [[ $1 == "userlist" || $1 == "primary" ]] ; then
-    if [[ $# -ne 2 ]]; then
-      echo "File must contain no header:\n column 1 - serialnumber (or deviceId)\n column 2 - userID"
-    fi
-    if [[ $2 == *"."* ]] ; then
-      if [ ! -f ~/gam/${2} ]; then
-        echo -e "No such file found:\n$2"
-        return
-      fi
-      # TODO - check if user really needs to be updated, i.e perform check against current user
-      in2csv -f csv ~/gam/${2} | csvcut -c 1,2 | sort | gsed 's/@skola.malmo.se//g' > ~/gam/primary_userlist.csv
-      csvcut -c 1 ~/gam/primary_userlist.csv | uniq | tr -d " " > ~/gam/primary_users_devices.csv
-      # does not work here to use full path!
-      crosbatch primary_users_devices.csv
-      org_name=$2:r:u
-      # insert header in cros_found.csv
-      header=$(head -n 1 cros.csv)
-      gsed -i "1i $header" ~/gam/cros_found.csv
-      csvgrep -c orgUnitPath -m "/${org_name}" ~/gam/cros_found.csv | csvsort -c serialNumber -y 0 > ~/gam/IN_ORG_found.csv
-      csvgrep -i -c orgUnitPath -m "/${org_name}" ~/gam/cros_found.csv | csvcut -c serialNumber,model,orgUnitPath > ~/gam/cros_in_other_orgs.csv
-      inorg=$(wc -l ~/gam/IN_ORG_found.csv | awk '{ print $1 }')
-      otherorgs=$(($(wc -l ~/gam/cros_in_other_orgs.csv | awk '{ print $1 }')-1))
-      if [ $otherorgs -ge 1 ] ; then
-        echo -e "\n${cyan}Found devices placed in other OU(s):${reset}"
-        cat ~/gam/cros_in_other_orgs.csv
-      fi
-      csvcut -c deviceId,serialNumber ~/gam/IN_ORG_found.csv | gsed 1d > ~/gam/IN_ORG_data.csv
-      csvcut -c serialNumber ~/gam/IN_ORG_found.csv | gsed 1d > ~/gam/IN_ORG_sn.csv
-      ggrep -i -f ~/gam/IN_ORG_sn.csv ~/gam/primary_userlist.csv > ~/gam/IN_ORG_match.csv
-      #TODO - make sure the serialNumber matches
-      echo "deviceId,serial,match_serial,user" > ~/gam/IN_ORG_batch_data.csv && paste -d "," ~/gam/IN_ORG_data.csv ~/gam/IN_ORG_match.csv >> ~/gam/IN_ORG_batch_data.csv
-      echo "\n${cyan}OK to update primary user on $(($inorg-1)) CB:s found in org ${org_name}?${reset}"
-      echo -e "(y/n)?"
-      read answer
-      if [ "$answer" != "${answer#[Yy]}" ] ; then
-        echo "Now updating all devices in file 'primary_user_batch.csv'"
-        gam csv ~/gam/IN_ORG_batch_data.csv gam update cros ~~deviceId~~ user ~~user~~
-      else
-        echo "Ok, not performing the update."
-      fi
-    else
-      echo "no valid file found"
-    fi  
-  elif [[ $1 == "retire" ]] ; then
-    if [[ $# -ne 3 ]]; then
-      echo "Illegal number of arguments (${#}), command must contain 3:\ncrosbatch retire XXGR 'Reason for retire device'"
-      return
-    fi
-    # insert header in cros_found.csv
-    header=$(head -n 1 cros.csv)
-    gsed -i "1i $header" ~/gam/cros_found.csv
-    csvgrep -c orgUnitPath -m "${2}" ~/gam/cros_found.csv > ~/gam/retire.csv
-    csvgrep -i -c orgUnitPath -m "${2}" ~/gam/cros_found.csv > ~/gam/not_retired.csv
-    not_retired=$(wc -l ~/gam/not_retired.csv | awk '{ print $1 }')
-    to_retire=$(wc -l ~/gam/retire.csv | awk '{ print $1 }')
-    to_retire=$(expr $to_retire - 1)
-    if [[ $not_retired -gt 1 ]] ; then
-      echo "${yellow}$(($not_retired-1)) device(s) out of scope${reset} (i.e. do not match OU), and will not be retired.\n${magenta}Check what device(s) in file:${reset}\n  ${green}not_retired.csv${reset}\n"
-    fi
-    echo "${cyan}Retire all ${to_retire} devices in 'retire.csv' with reason '$3'?${reset}"
-    echo -e "(y/n)?"
-    read answer
-    if [ "$answer" != "${answer#[Yy]}" ] ; then
-      csvgrep -c status -m "ACTIVE" ~/gam/retire.csv > ~/gam/disable.csv
-      retire_check=$(wc -l ~/gam/disable.csv | awk '{ print $1 }')
-      if [[ $retire_check == "1" ]] ; then
-        echo 'No devices need to be disabled, continuing...'
-      else
-        echo 'First disabling devices...'
-        gam csv ~/gam/disable.csv gam update cros ~~deviceId~~ action disable
-      fi
-      echo 'Now retiring...'
-      gam csv ~/gam/retire.csv gam update cros ~~deviceId~~ user ~~orgUnitPath~~ notes "${3}" ou /RETIRED quickcrosmove False nobatchupdate
-    fi
-  elif [[ $1 == "ATEA" ]] ; then
-    datestr=$(gdate --date="today" +%Y-%m-%d)
-    echo "Notes: \"Avregistrerade enligt ATEA:s listor ${datestr}\""
-    gam update cros file crosfile.txt notes "Avregistrerade enligt ATEA:s listor ${datestr}"
-    echo "Writing user/orgUnitPath"
-    gam csv cros_notdeprovisioned.csv gam update cros ~~deviceId~~ user ~~orgUnitPath~~
-    echo "Deprovisioning retiring device"
-    gam update cros file crosfile.txt action deprovision_retiring_device acknowledge_device_touch_requirement
-    echo "Moving to orgUnit: /DEPROVISIONED"
-    gam update cros file crosfile.txt ou /DEPROVISIONED quickcrosmove False nobatchupdate
+    echo "Usage:\n${green}$0 [userID|serialnumber]${reset} (search for user/device activities)\
+      \n${green}$0 [userID|serialnumber] ${yellow}full${reset} (search for all the user/device activities)"
   else
-    echo -e "Please specify a file containing one serial number per row!"
-    echo -e "Example: crosbatch SPGR.txt"
+    case "${@[$#]}" in
+    T)
+        gam select CPI info group "${@: 1:-1}"
+        ;;
+    *)
+        gam info group "${@}"
+        ;;
+   esac 
   fi
-} # crosbatch
-
-# update single chromebook
-cros() {
-if [[ ($# -eq 2) ]] ; then
-  if [[ $2 =~ ^(users|recent)$ ]] ; then
-    gam info cros query id:"$1" fields \
-        "deviceid,org,serialnumber,status,notes,annotatedUser,annotatedLocation,annotatedAssetId,model,osversion,lastsync,lastenrollmenttime,firstenrollmenttime,macaddress,recentusers,autoUpdateExpiration,lastknownnetwork,lastdeprovisiontimestamp,deprovisionreason"
-  elif [[ $2 =~ ^(enable|reenable)$ ]] ; then
-    gam update cros query id:${1} action reenable
-  elif [[ $2 =~ ^(disable)$ ]] ; then
-    gam update cros query id:${1} action disable
-  else
-    if [[ $2 == *"/"* ]] ; then
-      gam update cros query id:${1} org ${2} quickcrosmove False nobatchupdate
-    elif [[ $2 =~ GR$ || $2 =~ GRS$ || $2 =~ EST$ || $2 =~ GRSU$ ]] ; then
-      gam update cros query id:${1} org /171/Elev/${2} quickcrosmove False nobatchupdate
-    elif [[ $2 =~ GY$ || $2 =~ GYS$ || $2 =~ KV$ || $2 =~ SFI$ || $2 =~ SUV$ || $2 =~ YH$ ]] ; then
-      gam update cros query id:${1} org /170/Elev/${2} quickcrosmove False nobatchupdate
-    else
-      echo "unknown org or command"
-    fi
-  fi
-else
-  gam info cros query id:"$1" fields \
-      "deviceid,org,serialnumber,status,notes,annotatedUser,annotatedLocation,annotatedAssetId,model,osversion,lastsync,lastenrollmenttime,firstenrollmenttime,macaddress,autoUpdateExpiration,lastknownnetwork,lastdeprovisiontimestamp,deprovisionreason"
-fi
 }
 
-# initiate file transfer
+# create resource calendar
+resource() {
+  if [ $# -eq 0 ] ; then
+    echo "Example (remember the qoutes!):"
+    echo "${yellow}resource \"MÖGR-Grupprum 8\"${reset}"
+    echo "Will output GAM-commands to copy and run"
+    echo "\nTo alter admin account:"
+    echo "${cyan}resource \"ROGR-Grupprum 8\" abgr.admin${reset}"
+  elif [ $# -ne 0 ]; then
+    # prep admin + groups
+    ou=$(echo "$1:l" | awk -F"-" '{print $1}')
+    extens="$ou:u"
+    if [ "$ou" = "rögr" ] ; then
+      ou="rogr1"
+    elif [ "$ou" = "mögr" ] ; then
+      ou="mogr1"
+    fi
+    ou=$(extenstoou $ou)
+    personal="$ou.personal"
+    if [ $# -eq 2 ]; then
+      admin=$2
+    else
+      admin="$ou.admin"
+    fi
+    # prep id
+    id="$1:l"
+    id=${id// /-}
+    if [ "$extens" = "RÖGR" ] ; then
+      id=$(echo $id | awk -F"-" '$1="rögr" {OFS="-"; $1="rogr1" ; print $0}')
+    elif [ "$extens" = "MÖGR" ] ; then
+      id=$(echo $id | awk -F"-" '$1="mögr" {OFS="-"; $1="mogr1" ; print $0}')
+    fi
+    id=$(extenstoou $id)
+    # Show result/output:
+    echo Run the following GAM-commands:
+    echo "${green}gam create resource $id '$1' description '$1' type '$extens Resurs'"
+    echo "gam resource $id add acls owner $admin && gam user $admin modify calendars resource $id timezone 'Europe/Stockholm'\ngam resource $id add acls reader $personal sendnotifications false${reset}"
+  fi
+}
+
+# file transfer with options
 transfer() {
   if [ $# -eq 0 ]; then
     echo "example code:"
-    echo "transfer pelle.andersson PAGY private"
-    echo "transfer 'old_user' 'OU' [private|shared|all]"
+    echo "transfer pelle.andersson pagy.admin private"
+    echo "transfer 'old_user' 'new_user' [private|shared|all]"
   elif [ $# -eq 3 ]; then
     gam_command="gam create transfer ${1} drive"
     privacy_level='unset'
@@ -528,256 +252,32 @@ transfer() {
   fi
 }
 
-# undelete and place user in '/TEMP'
+# Undelete and place in /TEMP
 undelete() {
   gam undelete user $1 org /TEMP
 }
 
-## AD COMMANDS
-
-AD() {
-  AD_USER_CONF=$(sed -n '5p' ~/gam/.commandconfig.txt)
-  echo $AD_USER_CONF | tr -d '\n\r' > ~/gam/.ad_conf.txt
-  if [[ $1 == "name" ]] ; then
-    ldapsearch -LLL -o ldif-wrap=no -H $AD_URL -b \
-      "OU=Malmo,DC=intra,DC=malmo,DC=se" -D "CN=${AD_USER},OU=Employees,OU=ADM,OU=Malmo,DC=intra,DC=malmo,DC=se" \
-      -y ~/gam/.ad_conf.txt "(&(displayName=${2}* ${3}*))" \
-      cn otherMailbox mail displayName department memberOf title physicalDeliveryOfficeName telephoneNumber company \
-      adminDescription streetAddress division roomNumber manager mobile departmentNumber > ~/gam/ldap_out.txt
-      while read l ; do a=$(echo $l | awk '{print $1}') && b=$(echo $l | awk '{print $2}') && \
-      if [[ $a == *"::" ]] ; then
-        d=$(echo $b | base64 --decode)
-        c=$(echo "${a:0:-1} $d")
-		echo $c
-	  else
-		echo $l
-	  fi ; done < ~/gam/ldap_out.txt | tee >(grep memberOf | ggrep -E "17[01]G|SchoolEmployees|EDU_Students" > ~/gam/memberOf.txt) | grep -v memberOf && cat ~/gam/memberOf.txt
-  elif [[ $1 =~ ^(mail|email)$ ]] ; then
-    rm ~/gam/memberOf.txt
-    printf "(|" > ~/gam/memberOf.txt
-    ldapsearch -LLL -o ldif-wrap=no -H $AD_URL -b \
-        "OU=Malmo,DC=intra,DC=malmo,DC=se" -D "CN=${AD_USER},OU=Employees,OU=ADM,OU=Malmo,DC=intra,DC=malmo,DC=se" \
-        -y ~/gam/.ad_conf.txt "(&(mail=${2}*))" \
-        cn otherMailbox mail displayName givenName sn department memberOf title physicalDeliveryOfficeName telephoneNumber company \
-        adminDescription streetAddress division roomNumber manager mobile departmentNumber \
-        pwdLastSet whenCreated accountExpires pager extensionName houseIdentifier lastLogonTimestamp > ~/gam/ldap_out.txt
-    while read l
-    do
-      a=$(echo $l | awk '{print $1}')
-      b=$(echo $l | awk '{print $2}')
-      if [[ $a == *"::" ]] ; then
-        c=$(echo $b | base64 --decode)
-        l=$(echo "${a:0:-1} $c")
-        a=$(echo $l | awk '{print $1}')
-        b=$(echo $l | awk '{print $2}')
-      fi
-      if [[ $a == "memberOf:" ]] ; then
-        g=$(echo $b | awk -F, '{print $1}' | awk -F"=" '{print $2}')
-        printf "(CN=${g})" | ggrep -E "17[01]G|SchoolEmployees|EDU_Students" >> ~/gam/memberOf.txt
-      elif [[ $a == "mail:" ]] ; then
-        echo $l
-        echo "groups:"
-        printf ")" >> ~/gam/memberOf.txt
-        groups=$(cat ~/gam/memberOf.txt)
-        ADgroup "$groups"
-      else
-        if [[ $a == "pwdLastSet:" ]] ; then
-          d=$(ldaptime $b)
-          echo $a $d
-        elif [[ $a == "lastLogonTimestamp:" ]] ; then
-          d=$(ldaptime $b)
-          echo $a $d
-        elif [[ $a == "accountExpires:" ]] ; then
-          d=$(ldaptime $b)
-          echo $a $d
-        else
-          echo $l
-        fi
-      fi
-    done < ~/gam/ldap_out.txt
-  elif [[ $1 =~ ^(mail_and_groups|email_and_groups)$ ]] ; then
-    ldapsearch -LLL -o ldif-wrap=no -H $AD_URL -b \
-      "OU=Malmo,DC=intra,DC=malmo,DC=se" -D "CN=${AD_USER},OU=Employees,OU=ADM,OU=Malmo,DC=intra,DC=malmo,DC=se" \
-      -y ~/gam/.ad_conf.txt "(&(mail=${2}*))" \
-      cn otherMailbox mail displayName department memberOf title physicalDeliveryOfficeName telephoneNumber company \
-      adminDescription streetAddress division roomNumber manager mobile departmentNumber \
-       > ~/gam/ldap_out.txt  && while read l ; do a=$(echo $l | awk '{print $1}') && b=$(echo $l | awk '{print $2}') && \
-      if [[ $a == *"::" ]] ; then d=$(echo $b | base64 --decode) &&  c=$(echo "${a:0:-1} $d") && echo $c ; else echo $l ; fi ; done \
-      < ~/gam/ldap_out.txt
-  elif [[ $1 =~ ^(cn|CN)$ ]] ; then
-    ldapsearch -LLL -o ldif-wrap=no -H $AD_URL -b \
-      "OU=Malmo,DC=intra,DC=malmo,DC=se" -D "CN=${AD_USER},OU=Employees,OU=ADM,OU=Malmo,DC=intra,DC=malmo,DC=se" \
-      -y ~/gam/.ad_conf.txt "(&(CN=${2}))" \
-      cn otherMailbox mail displayName department memberOf title physicalDeliveryOfficeName telephoneNumber company \
-      adminDescription streetAddress division roomNumber manager mobile departmentNumber \
-       > ~/gam/ldap_out.txt  && while read l ; do a=$(echo $l | awk '{print $1}') && b=$(echo $l | awk '{print $2}') && \
-      if [[ $a == *"::" ]] ; then d=$(echo $b | base64 --decode) &&  c=$(echo "${a:0:-1} $d") && echo $c ; else echo $l ; fi ; done \
-      < ~/gam/ldap_out.txt | tee >(grep memberOf > ~/gam/memberOf.txt) | grep -v memberOf && cat ~/gam/memberOf.txt
-  elif [[ $1 =~ ^(eppn|EPPN)$ ]] ; then
-    ldapsearch -LLL -o ldif-wrap=no -H $AD_URL -b \
-      "OU=Malmo,DC=intra,DC=malmo,DC=se" -D "CN=${AD_USER},OU=Employees,OU=ADM,OU=Malmo,DC=intra,DC=malmo,DC=se" \
-      -y ~/gam/.ad_conf.txt "(&(extensionName=${2}))" \
-      cn otherMailbox mail displayName department title physicalDeliveryOfficeName telephoneNumber company \
-      adminDescription streetAddress division roomNumber manager mobile departmentNumber \
-       > ~/gam/ldap_out.txt  && while read l ; do a=$(echo $l | awk '{print $1}') && b=$(echo $l | awk '{print $2}') && \
-      if [[ $a == *"::" ]] ; then d=$(echo $b | base64 --decode) &&  c=$(echo "${a:0:-1} $d") && echo $c ; else echo $l ; fi ; done \
-      < ~/gam/ldap_out.txt | tee >(grep memberOf > ~/gam/memberOf.txt) | grep -v memberOf && cat ~/gam/memberOf.txt
-  elif [[ $1 =~ ^(group)$ ]] ; then
-    ldapsearch -LLL -o ldif-wrap=no -H $AD_URL -b \
-      "OU=Malmo,DC=intra,DC=malmo,DC=se" -D "CN=${AD_USER},OU=Employees,OU=ADM,OU=Malmo,DC=intra,DC=malmo,DC=se" \
-      -y ~/gam/.ad_conf.txt "(&(mail=${2}))" \
-      member > ~/gam/ldap_out.txt
-    printf "(|" > ~/gam/groupmembers.txt
-    while read l
-    do 
-      a=$(echo $l | awk '{print $1}') 
-      b=$(echo $l | awk '{print $2}')
-      if [[ $a == "member:" ]] ; then
-        c=$(echo $b | awk -F, '{print $1}' | awk -F"=" '{print $NF}')
-        printf "(CN=${c})" >> ~/gam/groupmembers.txt
-      fi
-    done < ~/gam/ldap_out.txt
-    printf ")" >> ~/gam/groupmembers.txt
-    groupmembers=$(cat ~/gam/groupmembers.txt)
-    AD othermail $groupmembers
-  elif [[ $1 =~ ^(groupCN)$ ]] ; then
-    ldapsearch -LLL -o ldif-wrap=no -H $AD_URL -b \
-      "OU=Malmo,DC=intra,DC=malmo,DC=se" -D "CN=${AD_USER},OU=Employees,OU=ADM,OU=Malmo,DC=intra,DC=malmo,DC=se" \
-      -y ~/gam/.ad_conf.txt "(&(CN=${2}))" \
-      member description > ~/gam/ldap_out.txt
-    printf "(|" > ~/gam/groupmembers.txt
-    while read l
-    do 
-      a=$(echo $l | awk '{print $1}') 
-      b=$(echo $l | awk '{print $2}')
-      if [[ $a == "member:" ]] ; then
-        c=$(echo $b | awk -F, '{print $1}' | awk -F"=" '{print $NF}')
-        printf "(CN=${c})" >> ~/gam/groupmembers.txt
-      fi
-    done < ~/gam/ldap_out.txt
-    printf ")" >> ~/gam/groupmembers.txt
-    groupmembers=$(cat ~/gam/groupmembers.txt)
-    AD othermail $groupmembers
-  elif [[ $1 =~ ^(empgroup)$ ]] ; then
-    ldapsearch -LLL -o ldif-wrap=no -H $AD_URL -b \
-      "OU=Malmo,DC=intra,DC=malmo,DC=se" -D "CN=${AD_USER},OU=Employees,OU=ADM,OU=Malmo,DC=intra,DC=malmo,DC=se" \
-      -y ~/gam/.ad_conf.txt "(&(adminDisplayName=adm-schoolemployees-school-${2}-*)(CN=ADM_SchoolEmployees-17*-School-*))" \
-      member description adminDisplayName > ~/gam/ldap_out.txt
-    printf "(|" > ~/gam/groupmembers.txt
-    while read l
-    do 
-      a=$(echo $l | awk '{print $1}') 
-      b=$(echo $l | awk '{print $2}')
-      if [[ $a == "member:" ]] ; then
-        c=$(echo $b | awk -F, '{print $1}' | awk -F"=" '{print $NF}')
-        printf "(CN=${c})" >> ~/gam/groupmembers.txt
-      fi
-    done < ~/gam/ldap_out.txt
-    printf ")" >> ~/gam/groupmembers.txt
-    groupmembers=$(cat ~/gam/groupmembers.txt)
-    AD othermail $groupmembers
-  elif [[ $1 =~ ^(othermail)$ ]] ; then
-    ldapsearch -LLL -o ldif-wrap=no -H $AD_URL -b \
-      "OU=Malmo,DC=intra,DC=malmo,DC=se" -D "CN=${AD_USER},OU=Employees,OU=ADM,OU=Malmo,DC=intra,DC=malmo,DC=se" \
-      -y ~/gam/.ad_conf.txt $2 \
-      otherMailbox > ~/gam/ldap_othermail.txt
-    while read l ; do
-      a=$(echo $l | awk '{print $1}')
-      b=$(echo $l | awk '{print $2}')
-      if [[ $a == "otherMailbox:" ]] ; then
-        echo $b
-      fi
-    done < ~/gam/ldap_othermail.txt
-  elif [[ $1 =~ ^(pwd)$ ]] ; then
-    ldapsearch -LLL -o ldif-wrap=no -H $AD_URL -b \
-      "OU=Malmo,DC=intra,DC=malmo,DC=se" -D "CN=${AD_USER},OU=Employees,OU=ADM,OU=Malmo,DC=intra,DC=malmo,DC=se" \
-      -y ~/gam/.ad_conf.txt "(&(CN=${2}))" cn mail pwdLastSet title company department  > ~/gam/ldap_out.txt
-    while read l
-      do
-        a=$(echo $l | awk '{print $1}')
-        b=$(echo $l | awk '{print $2}')
-        if [[ $a == "pwdLastSet:" ]] ; then
-          d=$(ldaptime $b)
-          printf "${d};"
-        elif [[ $a == *"::" ]] ; then
-          c=$(echo $b | base64 --decode)
-          l=$(echo "${a:0:-1} $c")
-          printf "${c};"
-        elif [ "$l" != "" ] ; then
-          printf "${b};"
-        else
-          echo ""
-        fi
-      done < ~/gam/ldap_out.txt
-  elif [[ $1 =~ ^(mail_nogroups)$ ]] ; then
-    ldapsearch -LLL -o ldif-wrap=no -H $AD_URL -b \
-      "OU=Malmo,DC=intra,DC=malmo,DC=se" -D "CN=${AD_USER},OU=Employees,OU=ADM,OU=Malmo,DC=intra,DC=malmo,DC=se" \
-      -y ~/gam/.ad_conf.txt "(&(mail=${2}*))" cn mail pwdLastSet title company department  > ~/gam/ldap_out.txt
-    while read l
-      do
-        a=$(echo $l | awk '{print $1}')
-        b=$(echo $l | awk '{print $2}')
-        if [[ $a == "pwdLastSet:" ]] ; then
-          d=$(ldaptime $b)
-          printf "${d};"
-        elif [[ $a == *"::" ]] ; then
-          c=$(echo $b | base64 --decode)
-          l=$(echo "${a:0:-1} $c")
-          printf "${c};"
-        elif [ "$l" != "" ] ; then
-          printf "${b};"
-        else
-          echo ""
-        fi
-      done < ~/gam/ldap_out.txt
-  elif [[ $1 =~ ^(department)$ ]] ; then
-    ldapsearch -LLL -o ldif-wrap=no -H $AD_URL -b \
-      "OU=Malmo,DC=intra,DC=malmo,DC=se" -D "CN=${AD_USER},OU=Employees,OU=ADM,OU=Malmo,DC=intra,DC=malmo,DC=se" \
-      -y ~/gam/.ad_conf.txt "(&(cn=${2}))" department > ~/gam/ldap_out.txt
-    while read l
-      do
-        a=$(echo $l | awk '{print $1}')
-        b=$(echo $l | cut -d' ' -f 2-)
-        if [[ $a == *"::" ]] ; then
-          c=$(echo $b | base64 --decode)
-          l=$(echo "${a:0:-1} $c")
-          printf "${c};"
-        elif [ "$l" != "" ] ; then
-          printf "${b};" | gsed 's/CN=//g' | gsed 's/,OU=.*/;/g'
-        else
-          echo ""
-        fi
-      done < ~/gam/ldap_out.txt
+# Show user info
+user() {
+  #echo "${@[$#]}"
+  if [ $# -eq 0 ] ; then
+    echo "Usage:\n${green}$0 [userID|serialnumber]${reset} (search for user/device activities)\
+      \n${green}$0 [userID|serialnumber] ${yellow}full${reset} (search for all the user/device activities)"
   else
-    echo "unknown command"
+    case "${@[$#]}" in
+    T)
+        gam select CPI info user "${@: 1:-1}"
+        ;;
+    *)
+        gam info user "${@}"
+        ;;
+   esac 
   fi
-  AD_USER_CONF="X"
-  echo $AD_USER_CONF | tr -d '\n\r' > ~/gam/.ad_conf.txt
-}
-
-ADgroup() {
-  ldapsearch -LLL -o ldif-wrap=no -H $AD_URL -b \
-      "OU=Malmo,DC=intra,DC=malmo,DC=se" -D "CN=${AD_USER},OU=Employees,OU=ADM,OU=Malmo,DC=intra,DC=malmo,DC=se" \
-      -y ~/gam/.ad_conf.txt $1 \
-      displayName adminDisplayName > ~/gam/ldap_group.txt
-  while read l
-  do
-    a=$(echo $l | awk '{print $1}')
-    b=$(echo $l | awk '{print $2}')
-    if [[ $a == *"::" ]] ; then
-      a=$(echo $l | awk '{print $1}')
-      b=$(echo $b | base64 --decode)
-    fi
-    if [[ $a =~ "displayName" ]] ; then
-      echo $b
-    fi
-  done < ~/gam/ldap_group.txt
 }
 
 
-ldaptime() {
-  # compensate for AD being off +1h ?? - how?
-  u=$(echo "$(($1 / 10000000))") && t=$(echo "$(($u - 11644473600))") && gdate -d @$t +'%Y-%m-%d %H:%M:%S'
-}
+## *******************************************************************************************
+## -- CLASSROOM -- 
+## *******************************************************************************************
 
 

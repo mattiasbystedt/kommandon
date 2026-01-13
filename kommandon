@@ -800,3 +800,77 @@ userprint() {
     ssconvert ~/gam/userprint_org.csv ~/gam/userprint${now}.xlsx
 }
 ## -- END REPORTS --
+
+
+## *******************************************************************************************
+## -- SUPERUSERS -- 
+## *******************************************************************************************
+
+addsuperuser() {
+  if [ "$#" -eq 0 ] ; then
+    echo "Usage:\naddsuperuser mattias.bystedt ABGR abgr.admin RÖGR rogr1.admin '0703-597908' [noyubikey]"
+  fi
+  
+  if [ "$#" -gt 0 ] ; then
+    len=$#
+    i=1
+    usercommand="update user "
+    admincommand=""
+    adminlist=""
+    org=""
+    for val in $@
+    do
+      if [[ $i == 1 && $val =~ \. ]] ; then
+        usercommand+="$val superUsers.yubiKey true "
+        admincommand+="recoveryemail ${val}@skola.malmo.se "
+      elif [[ $val =~ ^[[:upper:]]+$ ]] ; then
+        if [[ $val =~ GR$ || $val =~ GRS$ || $val =~ GRSU$ || $val =~ EST$  ]] ; then
+          org="superUsers.org 171"
+        else
+          org="superUsers.org 170"
+        fi
+        usercommand+="superUsers.admin multivalued type custom $val "
+      elif [[ $val =~ \.admin$ ]] ; then
+        usercommand+="\"${val}\" "
+        adminlist+="${val},"
+      elif [[ $val =~ ^[0-9].*.[0-9]$ ]] ; then
+        usercommand+="superUsers.phone $val "
+        recoveryphone=$(echo ${val} | gsed -E 's/^0/+46/' | gsed 's/-//')
+        admincommand+="recoveryphone ${recoveryphone}"
+      elif [[ $val =~ noyubikey$ ]] ; then
+        usercommand=${usercommand// true / false }
+      else
+        echo "unknown"
+      fi
+      i=$((i+1))
+    done
+    usercommand+=$org
+    admincommand_result="gam update users ${adminlist} "
+    admincommand_result+=$admincommand
+    eval "gam ${usercommand}"
+    eval "${admincommand_result}"
+  fi
+}
+
+delsuperuser() {
+  gam update user $1 clearschema superUsers
+}
+
+superusers() {
+  gam print users select group superusers schemas superUsers > ~/gam/superusers-out.csv
+  columns="primaryEmail,customSchemas.superUsers.org,customSchemas.superUsers.yubiKey,customSchemas.superUsers.phone,customSchemas.superUsers.admin,"
+  columns+=$(csvcut -n ~/gam/superusers-out.csv | ggrep -E "customType|value" | gawk '{printf $NF","}' | gsed -e 's/,$//')
+  numof_admins=$(csvcut -c customSchemas.superUsers.admin ~/gam/superusers-out.csv | ggrep '[[:digit:]]' | sort -rn | head -n 1)
+  header="SuperAnvändare,org,YubiKey,Mobil,Admins,Enhet,Admin"
+  # Add columns for numof_admins
+  if [ "$numof_admins" -gt 1 ] ; then 
+    for i in {2..$numof_admins} ; do
+      header="${header},Enhet${i},Admin${i}"
+    done
+  fi
+  csvcut -c $columns ~/gam/superusers-out.csv | gsed '1d' | gsed "1 i\\${header}" | csvsort -c 2,6 | tee ~/gam/all_superusers.csv | column -t -s,
+  if [[ $1 == "update" ]] ; then
+    gam user admin update drivefile ${SUPERUSERSFILE} localfile ~/gam/all_superusers.csv
+  fi
+}
+## -- END SUPERUSERS --

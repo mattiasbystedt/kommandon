@@ -16,6 +16,8 @@ CROSFILE=$(sed -n '3p' ~/gam/.commandconfig.txt)
 USERIDFILE=$(sed -n '4p' ~/gam/.commandconfig.txt)
 SUPERUSERSFILE=$(sed -n '5p' ~/gam/.commandconfig.txt)
 AD_USER=$(sed -n '6p' ~/gam/.commandconfig.txt)
+REPORT_DIR=$(sed -n '9p' ~/gam/.commandconfig.txt)
+HELPFILE=$(sed -n '10p' ~/gam/.commandconfig.txt)
 
 ## load colors ##
 autoload colors; colors
@@ -50,14 +52,16 @@ alias gamupdate='~/bin/gamadv-xtd3/./gam version checkrc 2> /dev/null ;
 alias galcheck='gam print users query employmentData.GAL=false fields org,gal schemas employmentData.GAL | ggrep -Ev "/INAKTIVA|/Vilande" | ggrep "True,False"'
 alias gaminfo='gam version extended'
 alias gamversion='gam version checkrc 2> /dev/null ; if [ $? -eq 0 ] ; then echo "OK" ; else echo "update needed" && ; fi'
-alias reports='/usr/bin/open -a "/Applications/Google Chrome.app" "https://drive.google.com/drive/u/0/folders/0B3WTCISsxnRqWWhXTjBBUVM0UUU"'
 alias unsuspend='gam unsuspend user'
 
 ### --- OTHER ALIASES ---
 ## ZeroTouch activities
 alias zerotouch='gam report admin user all event "PRE_PROVISION_CHROME_OS_DEVICE"'
 alias gservice='gam report admin user chromeos-enterprise-mgmt@system.gserviceaccount.com'
-
+# Open URL for helpfile
+alias helpfile='/usr/bin/open -a "/Applications/Google Chrome.app" "${HELPFILE}"'
+# Open URL for reports
+alias reports='/usr/bin/open -a "/Applications/Google Chrome.app" "${REPORT_DIR}"'
 
 ### *******************************************************************************************
 ### -- BASIC COMMANDS -- 
@@ -71,41 +75,56 @@ list_kommandon() {
   echo "${green}AD name${reset} : Search AD based on name, e.g. 'AD name Mattias Alqmawi'"
   echo ""
   echo "${yellow}Simplified GAM-commands:${reset}"
-  echo "${green}group${reset} : Google info regarding specific group. ${cyan}gam info group [groupname]${reset}"
-  echo "${green}transfer${reset} : Create file transfer via gam"
-  echo "${green}unsuspend${reset} : Unsuspends user (without changing orgUnit)"
-  echo "${green}user${reset} : Google info regarding specific user"
+  echo "${green}gal${reset} : Search user in GAL; [Firstname] [Lastname] - ${cyan}gam show people query [firstname lastname]${reset}"
+  echo "${green}group${reset} : Google info regarding specific group - ${cyan}gam info group [groupname]${reset}"
+  echo "${green}transfer${reset} : Create file transfer via gam - ${cyan}gam create transfer 'old_user' drive 'new_user' [private|shared|all]${reset}"
+  echo "${green}undelete${reset} : Undelete user and place in orgUnit '/TEMP' - ${cyan}gam undelete user [user] org /TEMP${reset}"
+  echo "${green}unsuspend${reset} : Unsuspends user (without changing orgUnit) - ${cyan}gam unsuspend user [user]${reset}"
+  echo "${green}user${reset} : Google info regarding specific user - ${cyan}gam info user [userID|email]${reset}"
+  echo "${green}userid${reset} : Search for a user based on AD-userID, e.g. 'ahmbys' - ${cyan}gam info users query employmentData.userID=ahmbys${reset}"
   echo ""
+  echo "${yellow}'Scripted' GAM-commands:${reset}"
   echo "${green}addsuperuser${reset} : Add a new superuser, updates the user and the corresponding admin account"
-  echo "${green}allgroups${reset} : Prints csv-file with all groups"
-  echo "${green}alluserids${reset} : Download the file containing all historically unique GoogleID:s"
-  echo "${green}approve [AppID]${reset} : Opens the 'google play for work' URL (activate admin profile in chrome first)"
-  echo "${green}clogin${reset} : Report CB-logins for a user or device"
   echo "${green}cbmanager${reset} : List and manage cbmanagers"
   echo "${green}classroom${reset} : List and manage a users Classrooms"
-  echo "${green}cros${reset} : Show and manage specific chromebook"
-  echo "${green}crosbatch${reset} : Manage chromebooks based on lists from schools"
-  echo "${green}crosprint${reset} : Download latest cros file"
   echo "${green}delsuperuser${reset} : Remove a superuser"
-  echo "${green}egilupdate${reset} : Update EGIL-commands"
-  echo "${green}gal${reset} : Search user in GAL; [Firstname] [Lastname]"
   echo "${green}galcheck${reset} : Shows GAL-mismatches (i.e. to be hidden from GAL)"
+  echo "${green}gamupdate${reset} : Update GAM if updated version is available online"
   echo "${green}gamversion${reset} : Check if updated version is available online"
-  echo "${green}gservice${reset} : Check logs for ATEA:s use of gserviceaccount"
   echo "${green}invites${reset} : Use if classroom can not be transferred (deletes invitation)"
   echo "${green}kollagrupper${reset} : Check if admins have made changes to school groups"
-  echo "${green}kommandoupdate${reset} : Update kommandon"
-  echo "${green}logdate [YYYY-MM-DD]${reset} : Download csv-log for a specific date, e.g. 'logdate 2026-01-13'"
-  echo "${green}reload | load${reset} : Use after updating via github"
   echo "${green}resource${reset} : Returns gam commands for creating resource calendar"
   echo "${green}superusers${reset} : Shows a summary/list of all superusers"
-  echo "${green}todayslog${reset} : Download csv-log for today (until 'now')"
-  echo "${green}undelete${reset} : Undelete user and place in orgUnit '/TEMP'"
-  echo "${green}unsuspend${reset} : Unsuspends user (without changing orgUnit)"
-  echo "${green}userid${reset} : Search for a user based on AD-userID, e.g. 'ahmbys'"
-  echo "${green}userprint${reset} : Download latest user file"
+  echo ""
+  echo "${yellow}Chromebook-commands:${reset}"
+  echo "${green}cblogin${reset} : Show report of CB-logins/events for a user or device"
+  echo "${green}cros${reset} : Show and manage specific chromebook"
+  echo "${green}crosbatch${reset} : Manage chromebooks based on lists from schools"
+  echo "${green}gservice${reset} : Check logs for ATEA:s use of gserviceaccount"
   echo "${green}welib${reset} : Returns gam command for activiating 'självservice'"
   echo "${green}zerotouch${reset} : Check logs for zerotouch-registered devices"
+  echo ""
+  echo "${yellow}Nightly reports:${reset}"
+  echo "${green}crosprint${reset} : Download latest cros file"
+  echo "${green}userprint${reset} : Download latest user file"
+  echo ""
+  echo "${yellow}LIVE reports:${reset}"
+  echo "${green}allgroups${reset} : Prints csv-file with all groups"
+  echo "${green}alluserids${reset} : Download the file containing all historically unique GoogleID:s"
+  echo "${green}logdate [YYYY-MM-DD]${reset} : Download csv-log for a specific date, e.g. 'logdate 2026-01-13'"
+  echo "${green}todayslog${reset} : Download csv-log for today (until 'now')"
+  echo "" 
+  echo "${yellow}Update from github:${reset}"
+  echo "${green}egilupdate${reset} : Update EGIL-commands"
+  echo "${green}kommandoupdate${reset} : Update kommandon"
+  echo "${green}reload | load${reset} : Use after updating via github"
+  echo ""
+  echo "${yellow}Switch GAM environment:${reset}"
+  echo "${green}gam select CPI save${reset}"
+  echo "${green}gam select default save${reset}"
+  echo ""  
+  echo "${yellow}Other commands:${reset}"
+  echo "${green}approve [AppID]${reset} : Opens the 'google play for work' URL (activate admin profile in chrome first)"
   echo ""
   echo "${white}Most commands: type [command] for more help.${reset}"
   echo ""

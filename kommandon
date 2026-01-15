@@ -2,6 +2,7 @@
 export NLS_LANG=.AL32UTF8
 
 ## GLOBAL ##
+alias egilupdate='curl https://raw.githubusercontent.com/mattiasbystedt/egil-kommandon/master/egil.sh > ~/gam/egil.sh'
 alias kommandoupdate='curl https://raw.githubusercontent.com/mattiasbystedt/kommandon/master/kommandon > ~/.kommandon'
 alias load='source ~/.zshrc'
 alias reload='source ~/.zshrc'

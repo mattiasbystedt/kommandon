@@ -243,7 +243,7 @@ resource() {
 transfer() {
   if [ $# -eq 0 ]; then
     echo "example code:"
-    echo "transfer pelle.andersson pagy.admin private"
+    echo "transfer pelle.andersson pagy.admin shared"
     echo "transfer 'old_user' 'new_user' [private|shared|all]"
   elif [ $# -eq 3 ]; then
     gam_command="gam create transfer ${1} drive"
@@ -255,7 +255,7 @@ transfer() {
     elif [[ $3 == "all" ]] ; then
       privacy_level='all'
     else
-      echo "error, command should be: 'old_user' 'OU' [private|shared|all]"
+      echo "error, command should be: 'old_user' 'new_user' [private|shared|all]"
       return
     fi
 
@@ -273,7 +273,7 @@ transfer() {
   elif [[ $# -eq 1 && $1 =~ ^(show|print)$ ]] ; then
     gam print transfers | awk -F, 'OFS="," {print $3,$4,$5,$9}'
   else
-    echo "error, command should be: 'old_user' 'OU' [private|shared|all]"
+    echo "error, command should be: 'old_user' 'new_user' [private|shared|all]"
   fi
 }
 

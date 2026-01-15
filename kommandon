@@ -71,7 +71,7 @@ list_kommandon() {
   echo "${green}AD name${reset} : Search AD based on name, e.g. 'AD name Mattias Alqmawi'"
   echo ""
   echo "${yellow}Simplified GAM-commands:${reset}"
-  echo "${green}group${reset} : Google info regarding specific group"
+  echo "${green}group${reset} : Google info regarding specific group. ${cyan}gam info group [groupname]${reset}"
   echo "${green}transfer${reset} : Create file transfer via gam"
   echo "${green}unsuspend${reset} : Unsuspends user (without changing orgUnit)"
   echo "${green}user${reset} : Google info regarding specific user"
